@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "test": "node --test --import tsx"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.5"
+  },
   "exports": {
     ".": "./src/index.ts"
   }

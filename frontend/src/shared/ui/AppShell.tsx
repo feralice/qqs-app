@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
+import type { ReactNode } from "react";
 
 import { theme } from "./theme.js";
 
-export function AppShell() {
+export function AppShell({ children }: { children?: ReactNode }) {
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
@@ -10,10 +11,14 @@ export function AppShell() {
         <Text style={styles.headerSubtitle}>Visitas técnicas</Text>
       </View>
       <View style={styles.content}>
-        <Text style={styles.title}>Bem-vindo</Text>
-        <Text style={styles.description}>
-          Acompanhe suas visitas e checklists mesmo sem internet.
-        </Text>
+        {children ?? (
+          <>
+            <Text style={styles.title}>Bem-vindo</Text>
+            <Text style={styles.description}>
+              Acompanhe suas visitas e checklists mesmo sem internet.
+            </Text>
+          </>
+        )}
       </View>
     </View>
   );

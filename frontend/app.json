@@ -5,7 +5,18 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "qqs",
-    "plugins": ["expo-router"],
+
+
+
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permita que o QQS registre o local da chegada."
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }

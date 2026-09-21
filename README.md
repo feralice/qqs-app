@@ -25,4 +25,12 @@ npm run dev --workspace=@qqs/backend
 npm start --workspace=@qqs/frontend
 ```
 
+Para usar uma API acessível por outro dispositivo na rede local, defina
+`EXPO_PUBLIC_API_URL`. Sem essa variável, o frontend usa
+`http://127.0.0.1:3333`.
+
+```bash
+EXPO_PUBLIC_API_URL=http://192.168.0.10:3333 npm start --workspace=@qqs/frontend
+```
+
 O backend usa PostgreSQL como banco planejado e Drizzle ORM como camada de persistência. A configuração do banco será adicionada no próximo incremento.

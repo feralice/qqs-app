@@ -1,7 +1,27 @@
 import type { LocalOperation, NewLocalOperation } from "./local-operation.js";
 
+export type OperationProcessor = (operation: LocalOperation) => Promise<void>;
+
 export class SyncQueue {
   private readonly operations = new Map<string, LocalOperation>();
+
+  private updateStatus(
+    operationId: string,
+    status: LocalOperation["status"],
+  ): LocalOperation {
+    const operation = this.require(operationId);
+    const updated: LocalOperation = { ...operation, status };
+    this.operations.set(operationId, updated);
+    return updated;
+  }
+
+  private require(operationId: string): LocalOperation {
+    const operation = this.operations.get(operationId);
+    if (!operation) {
+      throw new Error(`operation not found: ${operationId}`);
+    }
+    return operation;
+  }
 
   enqueue(input: NewLocalOperation): LocalOperation {
     const existing = this.operations.get(input.operationId);
@@ -15,14 +35,24 @@ export class SyncQueue {
   }
 
   confirm(operationId: string): LocalOperation {
-    const operation = this.operations.get(operationId);
-    if (!operation) {
-      throw new Error("operation not found");
-    }
+    return this.updateStatus(operationId, "synced");
+  }
 
-    const confirmed: LocalOperation = { ...operation, status: "synced" };
-    this.operations.set(operationId, confirmed);
-    return confirmed;
+  get(operationId: string): LocalOperation | undefined {
+    return this.operations.get(operationId);
+  }
+
+  async process(processor: OperationProcessor): Promise<void> {
+    for (const operation of this.pending()) {
+      this.updateStatus(operation.operationId, "syncing");
+
+      try {
+        await processor(operation);
+        this.confirm(operation.operationId);
+      } catch {
+        this.updateStatus(operation.operationId, "failed");
+      }
+    }
   }
 
   pending(): LocalOperation[] {

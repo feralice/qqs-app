@@ -36,3 +36,46 @@ test("re-enqueuing the same operation identifier does not duplicate it", () => {
   assert.deepEqual(second, first);
   assert.equal(queue.pending().length, 1);
 });
+
+test("processes a visit.start operation and marks it as synced", async () => {
+  const queue = new SyncQueue();
+  queue.enqueue({
+    operationId: "operation-visit-start",
+    entityId: "visit-1",
+    type: "visit.start",
+    payload: { arrivedAt: "2026-09-21T12:00:00.000Z" },
+  });
+
+  const processed: string[] = [];
+  await queue.process(async (operation) => {
+    processed.push(operation.operationId);
+  });
+
+  assert.deepEqual(processed, ["operation-visit-start"]);
+  assert.equal(queue.pending().length, 0);
+  assert.equal(queue.get("operation-visit-start")?.status, "synced");
+});
+
+test("keeps a failed operation pending and retries with the same operation id", async () => {
+  const queue = new SyncQueue();
+  queue.enqueue({
+    operationId: "operation-retry",
+    entityId: "visit-1",
+    type: "visit.start",
+    payload: { arrivedAt: "2026-09-21T12:00:00.000Z" },
+  });
+
+  await queue.process(async () => {
+    throw new Error("offline");
+  });
+  assert.equal(queue.get("operation-retry")?.status, "failed");
+
+  const retried: string[] = [];
+  await queue.process(async (operation) => {
+    retried.push(operation.operationId);
+  });
+
+  assert.deepEqual(retried, ["operation-retry"]);
+  assert.equal(queue.get("operation-retry")?.status, "synced");
+  assert.equal(queue.pending().length, 0);
+});

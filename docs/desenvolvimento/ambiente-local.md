@@ -37,6 +37,15 @@ A API será preparada para a porta `3333`. A rota inicial é `GET /health`.
 npm start --workspace=@qqs/frontend
 ```
 
+Para apontar o app para outra API durante o desenvolvimento, configure
+`EXPO_PUBLIC_API_URL`:
+
+```bash
+EXPO_PUBLIC_API_URL=http://192.168.0.10:3333 npm start --workspace=@qqs/frontend
+```
+
+Se a variável não for definida, o cliente usa `http://127.0.0.1:3333`.
+
 O frontend usa Expo Router e a paleta visual definida no documento de arquitetura:
 
 | Uso | Cor |
