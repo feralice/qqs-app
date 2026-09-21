@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "QQS App",
+    "slug": "qqs-app",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "qqs",
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

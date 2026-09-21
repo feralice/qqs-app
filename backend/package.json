@@ -1,0 +1,22 @@
+{
+  "name": "@qqs/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test --import tsx"
+  },
+  "dependencies": {
+    "@qqs/contracts": "0.1.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "node-mocks-http": "^1.17.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
