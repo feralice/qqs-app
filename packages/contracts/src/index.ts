@@ -54,3 +54,38 @@ export type StartVisitRequest = {
 };
 
 export type StartVisitResponse = VisitDetails;
+
+export type AuthUser = {
+  id: UserId;
+  name: string;
+  email: string;
+  role: UserRole;
+};
+
+export type LoginRequest = {
+  email: string;
+  password: string;
+};
+
+export type LoginResponse = {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUser;
+};
+
+export type RefreshRequest = {
+  refreshToken: string;
+};
+
+export type RefreshResponse = {
+  accessToken: string;
+  refreshToken: string;
+};
+
+export type RegisterRequest = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+export type RegisterResponse = LoginResponse;

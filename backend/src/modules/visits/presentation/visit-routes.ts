@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import type { ArrivalLocation, VisitDetails, VisitSummary } from "@qqs/contracts";
 
 import { startVisit } from "../application/start-visit.js";
@@ -24,7 +24,10 @@ function toDetails(visit: Awaited<ReturnType<InMemoryVisitRepository["findById"]
   };
 }
 
-export function visitRoutes(repository: InMemoryVisitRepository): Router {
+export function visitRoutes(
+  repository: InMemoryVisitRepository,
+  options: { requireSupervisor: RequestHandler },
+): Router {
   const router = Router();
 
   router.get("/visits", async (_request, response) => {
@@ -50,7 +53,7 @@ export function visitRoutes(repository: InMemoryVisitRepository): Router {
     response.json(details);
   });
 
-  router.post("/visits", async (request, response) => {
+  router.post("/visits", options.requireSupervisor, async (request, response) => {
     const visit = await repository.save({
       id: request.body.id,
       clientId: request.body.clientId,

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Linking, Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Linking, ScrollView, Text, View } from "react-native";
 
 import type { VisitDetails } from "@qqs/contracts";
 
@@ -8,18 +8,21 @@ import { startVisit } from "./start-visit";
 import type { VisitApi } from "./visit-api";
 import { SyncQueue } from "../sync/sync-queue";
 import { VisitStore } from "./visit-store";
-import { theme } from "../../shared/ui/theme";
+import { Button } from "../../shared/ui/components/Button";
+import { styles } from "./VisitDetailsScreen.styles";
 
 export function VisitDetailsScreen({
   visit,
   api,
   locationProvider,
+  employeeId = "employee-001",
   queue = new SyncQueue(),
   store = new VisitStore(),
 }: {
   visit: VisitDetails;
   api: Pick<VisitApi, "startVisit">;
   locationProvider: LocationProvider;
+  employeeId?: string;
   queue?: SyncQueue;
   store?: VisitStore;
 }) {
@@ -33,7 +36,7 @@ export function VisitDetailsScreen({
     const result = await startVisit({
       visitId: current.id,
       clientId: current.clientId,
-      employeeId: "employee-001",
+      employeeId,
       now: new Date().toISOString(),
       locationProvider,
       queue,
@@ -56,55 +59,44 @@ export function VisitDetailsScreen({
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{current.clientName}</Text>
       {current.clientAddress && <Text style={styles.address}>{current.clientAddress}</Text>}
-      <Text style={styles.section}>Sistemas</Text>
-      {current.systems.map((system) => (
-        <Text key={system.id} style={styles.system}>
-          • {system.name}
+      <View style={[styles.badge, current.status === "in_progress" && styles.badgeInProgress]}>
+        <Text style={styles.badgeText}>
+          {current.status === "in_progress" ? "Em andamento" : "Aguardando chegada"}
         </Text>
-      ))}
+      </View>
+      <Text style={styles.section}>Sistemas</Text>
+      <View style={styles.systemsCard}>
+        {current.systems.map((system, index) => (
+          <View
+            key={system.id}
+            style={[styles.systemRow, index === current.systems.length - 1 && styles.systemRowLast]}
+          >
+            <View style={styles.systemDot} />
+            <Text style={styles.system}>{system.name}</Text>
+          </View>
+        ))}
+      </View>
       {current.status === "assigned" && (
-        <Pressable disabled={loading} onPress={handleStart} style={styles.primaryButton}>
-          <Text style={styles.primaryText}>{loading ? "Registrando..." : "Registrar chegada"}</Text>
-        </Pressable>
+        <Button
+          label="Registrar chegada"
+          loading={loading}
+          onPress={handleStart}
+          style={styles.arrivalButton}
+        />
       )}
       {message && <Text style={styles.message}>{message}</Text>}
       {coordinates && (
-        <Pressable
+        <Button
+          label="Abrir localização no Google Maps"
+          variant="secondary"
+          style={styles.mapButton}
           onPress={() =>
             Linking.openURL(
               `https://www.google.com/maps/search/?api=1&query=${coordinates.latitude},${coordinates.longitude}`,
             )
           }
-          style={styles.mapButton}
-        >
-          <Text style={styles.mapText}>Abrir localização no Google Maps</Text>
-        </Pressable>
+        />
       )}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: theme.spacing.lg },
-  title: { color: theme.colors.darkGray, fontSize: 26, fontWeight: "700" },
-  address: { color: theme.colors.nearBlack, marginTop: 8 },
-  section: { color: theme.colors.darkGray, fontSize: 18, fontWeight: "700", marginTop: 28 },
-  system: { color: theme.colors.nearBlack, fontSize: 16, marginTop: 10 },
-  primaryButton: {
-    alignItems: "center",
-    backgroundColor: theme.colors.corporateBlue,
-    borderRadius: theme.radius.md,
-    marginTop: 28,
-    padding: theme.spacing.md,
-  },
-  primaryText: { color: theme.colors.white, fontWeight: "700" },
-  message: { color: theme.colors.darkGray, marginTop: theme.spacing.md },
-  mapButton: {
-    alignItems: "center",
-    backgroundColor: theme.colors.aqua,
-    borderRadius: theme.radius.md,
-    marginTop: theme.spacing.md,
-    padding: theme.spacing.md,
-  },
-  mapText: { color: theme.colors.nearBlack, fontWeight: "700" },
-});

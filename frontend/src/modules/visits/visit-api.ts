@@ -11,13 +11,20 @@ export type VisitApi = {
   startVisit(id: string, request: StartVisitRequest): Promise<StartVisitResponse>;
 };
 
+import { getDefaultApiUrl } from "../auth/auth-api";
+
 export function createVisitApi(
+  accessToken?: string,
   fetcher: typeof fetch = fetch,
-  baseUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:3333",
+  baseUrl?: string,
 ): VisitApi {
   async function request<T>(path: string, init?: RequestInit): Promise<T> {
-    const response = await fetcher(`${baseUrl}${path}`, {
-      headers: { "Content-Type": "application/json" },
+    const activeBaseUrl = baseUrl ?? getDefaultApiUrl();
+    const response = await fetcher(`${activeBaseUrl}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
       ...init,
     });
     if (!response.ok) {

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { colors } from "./theme.js";
+import { colors } from "./theme";
 
 test("theme exposes the approved QQS blue palette", () => {
   assert.deepEqual(colors, {

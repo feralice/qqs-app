@@ -65,8 +65,7 @@ O backend montará o relatório a partir dos dados persistidos, incluindo client
 
 ## Decisões adiadas
 
-- GPS obrigatório ou opcional.
 - Serviço de SMS para autenticação por telefone.
-- Edição de modelos de checklist pelo próprio app.
+- Edição de modelos de checklist pelo próprio app/painel.
 - Política para edição/revisão de visitas já sincronizadas.
 - Provedor definitivo de armazenamento de objetos.

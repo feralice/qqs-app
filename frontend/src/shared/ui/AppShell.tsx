@@ -1,16 +1,32 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import type { ReactNode } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { theme } from "./theme.js";
+import { useAuth } from "../../modules/auth/AuthContext";
+import { theme } from "./theme";
+import { styles } from "./AppShell.styles";
 
 export function AppShell({ children }: { children?: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const { user, logout } = useAuth();
+
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>QQS App</Text>
-        <Text style={styles.headerSubtitle}>Visitas técnicas</Text>
+      <View style={[styles.header, { paddingTop: insets.top + theme.spacing.md }]}>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.headerTitle}>QQS App</Text>
+            <Text style={styles.headerSubtitle}>Visitas técnicas</Text>
+          </View>
+          {user && (
+            <Pressable accessibilityRole="button" onPress={logout}>
+              <Text style={styles.headerUser}>{user.name}</Text>
+              <Text style={styles.headerLogout}>Sair</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingBottom: insets.bottom + theme.spacing.lg }]}>
         {children ?? (
           <>
             <Text style={styles.title}>Bem-vindo</Text>
@@ -23,40 +39,3 @@ export function AppShell({ children }: { children?: ReactNode }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: theme.colors.white,
-  },
-  header: {
-    backgroundColor: theme.colors.corporateBlue,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.lg,
-  },
-  headerTitle: {
-    color: theme.colors.white,
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  headerSubtitle: {
-    color: theme.colors.lightBlue,
-    fontSize: 14,
-    marginTop: theme.spacing.sm,
-  },
-  content: {
-    backgroundColor: theme.colors.lightBlue,
-    flex: 1,
-    padding: theme.spacing.lg,
-  },
-  title: {
-    color: theme.colors.darkGray,
-    fontSize: 28,
-    fontWeight: "700",
-  },
-  description: {
-    color: theme.colors.nearBlack,
-    fontSize: 16,
-    marginTop: theme.spacing.sm,
-  },
-});

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { SyncQueue } from "./sync-queue.js";
+import { SyncQueue } from "./sync-queue";
 
 test("enqueued operation stays pending until it is confirmed", () => {
   const queue = new SyncQueue();

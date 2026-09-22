@@ -1,4 +1,4 @@
-import type { LocalOperation, NewLocalOperation } from "./local-operation.js";
+import type { LocalOperation, NewLocalOperation } from "./local-operation";
 
 export type OperationProcessor = (operation: LocalOperation) => Promise<void>;
 

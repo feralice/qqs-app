@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node.js 22, TypeScript, React Native, Expo, Expo Router, Express, Zod, PostgreSQL, Drizzle ORM, Drizzle Kit, Jest/Vitest e Supertest.
 
-**Spec:** `docs/requisitos/RS-001-qqs-app-v0.1.md` e `docs/arquitetura/ARQ-001-qqs-app.md`
+**Spec:** `docs/requisitos/RS-001-qqs-app-v0.2.md` e `docs/arquitetura/ARQ-001-qqs-app.md`
 
 ## Global Constraints
 

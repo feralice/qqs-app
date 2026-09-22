@@ -1,9 +1,9 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 
 import type { VisitDetails } from "@qqs/contracts";
 
 import { VisitCard } from "./VisitCard";
-import { theme } from "../../shared/ui/theme";
+import { styles } from "./VisitsScreen.styles";
 
 export function VisitsScreen({
   visits,
@@ -20,7 +20,14 @@ export function VisitsScreen({
         contentContainerStyle={styles.list}
         data={visits}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.empty}>Nenhuma visita atribuída.</Text>}
+        ListEmptyComponent={
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyTitle}>Nenhuma visita atribuída</Text>
+            <Text style={styles.emptyBody}>
+              Quando uma empresa for atribuída a você, ela aparece aqui.
+            </Text>
+          </View>
+        }
         renderItem={({ item }) => (
           <VisitCard visit={item} onPress={() => onOpen(item.id)} />
         )}
@@ -28,11 +35,3 @@ export function VisitsScreen({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: theme.spacing.lg },
-  title: { color: theme.colors.darkGray, fontSize: 28, fontWeight: "700" },
-  subtitle: { color: theme.colors.nearBlack, fontSize: 15, marginTop: 6 },
-  list: { paddingTop: theme.spacing.lg },
-  empty: { color: theme.colors.nearBlack, marginTop: theme.spacing.lg },
-});

@@ -1,14 +1,35 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequest, createResponse } from "node-mocks-http";
+import type { Express } from "express";
 
 import { createApp } from "../../../app.js";
 
-async function request(options: Parameters<typeof createRequest>[0]) {
+// bcrypt (usado no login de apoio) roda em várias etapas assíncronas; espera
+// response._isEndCalled() em vez de um único tick.
+async function call(app: Express, options: Parameters<typeof createRequest>[0]) {
   const response = createResponse();
-  await createApp()(createRequest(options), response);
-  await new Promise((resolve) => setImmediate(resolve));
+  app(createRequest(options), response);
+  for (let tick = 0; tick < 100 && !response._isEndCalled(); tick++) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
   return response;
+}
+
+// Cada teste ganha seu próprio app + login, pra não depender de estado de outro teste.
+async function request(options: NonNullable<Parameters<typeof createRequest>[0]>) {
+  const app = createApp();
+  const loginResponse = await call(app, {
+    method: "POST",
+    url: "/auth/login",
+    body: { email: "tecnico@qqs.app", password: "Tecnico123!" },
+  });
+  const { accessToken } = loginResponse._getJSONData();
+
+  return call(app, {
+    ...options,
+    headers: { authorization: `Bearer ${accessToken}`, ...options.headers },
+  });
 }
 
 test("GET /visits returns the development visit", async () => {
