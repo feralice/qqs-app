@@ -1,40 +1,86 @@
 import { StyleSheet } from "react-native";
-
 import { theme } from "../../shared/ui/theme";
 
 export const styles = StyleSheet.create({
-  title: { color: theme.colors.darkGray, fontSize: 28, fontWeight: "700" },
-  subtitle: { color: theme.colors.nearBlack, fontSize: 15, marginTop: 6 },
-  sectionLabel: {
-    color: theme.colors.corporateBlue,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    marginTop: theme.spacing.lg,
-    textTransform: "uppercase",
+  container: {
+    padding: theme.spacing.lg,
   },
-  card: {
-    backgroundColor: theme.colors.white,
-    borderLeftColor: theme.colors.aqua,
-    borderLeftWidth: 4,
-    borderRadius: theme.radius.md,
+  header: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: theme.spacing.lg,
+  },
+  title: {
+    color: theme.colors.darkGray,
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    color: "#555E68",
+    fontSize: 14,
+    marginTop: 2,
+  },
+  sectionTitle: {
+    color: theme.colors.darkGray,
+    fontSize: 18,
+    fontWeight: "800",
+    marginBottom: theme.spacing.md,
     marginTop: theme.spacing.md,
+  },
+  statsRow: {
+    flexDirection: "row",
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  moduleCard: {
+    backgroundColor: theme.colors.white,
+    borderColor: "#E2EEF8",
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: theme.spacing.md,
     padding: theme.spacing.md,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: "#0876C9",
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowRadius: 10,
     elevation: 2,
   },
-  cardTitle: { color: theme.colors.darkGray, fontSize: 16, fontWeight: "700" },
-  cardBody: { color: theme.colors.nearBlack, fontSize: 14, marginTop: 6 },
-  cardTag: {
-    alignSelf: "flex-start",
-    backgroundColor: theme.colors.lightBlue,
-    borderRadius: 999,
-    marginTop: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+  moduleHeader: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 12,
   },
-  cardTagText: { color: theme.colors.corporateBlue, fontSize: 11, fontWeight: "700" },
+  moduleIconWrap: {
+    alignItems: "center",
+    backgroundColor: "#F0F7FD",
+    borderRadius: 14,
+    height: 42,
+    justifyContent: "center",
+    width: 42,
+  },
+  moduleTextWrap: {
+    flex: 1,
+  },
+  moduleTitle: {
+    color: theme.colors.darkGray,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  moduleBody: {
+    color: "#555E68",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  moduleFooter: {
+    alignItems: "center",
+    borderTopColor: "#F0F7FD",
+    borderTopWidth: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 12,
+    paddingTop: 10,
+  },
 });
