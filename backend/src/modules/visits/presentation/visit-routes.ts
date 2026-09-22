@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from "express";
 import type { ArrivalLocation, VisitDetails, VisitSummary } from "@qqs/contracts";
 
 import { startVisit } from "../application/start-visit.js";
+import { finishVisit } from "../application/finish-visit.js";
 import type { InMemoryVisitRepository } from "../infrastructure/in-memory-visit-repository.js";
 
 function toDetails(visit: Awaited<ReturnType<InMemoryVisitRepository["findById"]>>): VisitDetails | undefined {
@@ -20,7 +21,8 @@ function toDetails(visit: Awaited<ReturnType<InMemoryVisitRepository["findById"]
     arrival: visit.arrivedAt
       ? { arrivedAt: visit.arrivedAt, location: visit.arrivalLocation }
       : undefined,
-    syncStatus: visit.status === "in_progress" ? "synced" : "pending",
+    finishedAt: visit.finishedAt,
+    syncStatus: (visit.status === "in_progress" || visit.status === "completed") ? "synced" : "pending",
   };
 }
 
@@ -94,6 +96,27 @@ export function visitRoutes(
         response.status(409).json({ error: error.message });
         return;
       }
+      response.status(500).json({ error: "internal server error" });
+    }
+  });
+
+  router.post("/visits/:id/finish", async (request, response) => {
+    try {
+      const current = await repository.findById(request.params.id);
+      if (!current) {
+        response.status(404).json({ error: "visit not found" });
+        return;
+      }
+
+      const visit = await finishVisit(repository, {
+        visitId: current.id,
+        clientId: current.clientId,
+        employeeId: current.employeeId,
+        operationId: request.body.operationId ?? `op-finish-${Date.now()}`,
+        finishedAt: request.body.finishedAt ?? new Date().toISOString(),
+      });
+      response.json(toDetails({ ...current, ...visit }));
+    } catch (error) {
       response.status(500).json({ error: "internal server error" });
     }
   });

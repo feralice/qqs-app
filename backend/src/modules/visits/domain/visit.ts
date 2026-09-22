@@ -11,7 +11,7 @@ export type Visit = {
   id: VisitId;
   clientId: ClientId;
   employeeId: UserId;
-  status: Extract<VisitStatus, "assigned" | "in_progress">;
+  status: Extract<VisitStatus, "assigned" | "in_progress" | "completed">;
   clientName?: string;
   clientAddress?: string;
   scheduledFor?: string;
@@ -19,4 +19,6 @@ export type Visit = {
   arrivedAt?: string;
   arrivalLocation?: ArrivalLocation;
   lastStartOperationId?: OperationId;
+  finishedAt?: string;
+  lastFinishOperationId?: OperationId;
 };

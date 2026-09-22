@@ -44,6 +44,7 @@ export type VisitDetails = VisitSummary & {
     arrivedAt: string;
     location?: ArrivalLocation;
   };
+  finishedAt?: string;
   syncStatus: SyncStatus;
 };
 
@@ -54,6 +55,13 @@ export type StartVisitRequest = {
 };
 
 export type StartVisitResponse = VisitDetails;
+
+export type FinishVisitRequest = {
+  operationId: OperationId;
+  finishedAt: string;
+};
+
+export type FinishVisitResponse = VisitDetails;
 
 export type AuthUser = {
   id: UserId;

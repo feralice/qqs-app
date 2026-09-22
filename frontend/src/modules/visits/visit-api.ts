@@ -1,4 +1,6 @@
 import type {
+  FinishVisitRequest,
+  FinishVisitResponse,
   StartVisitRequest,
   StartVisitResponse,
   VisitDetails,
@@ -9,6 +11,7 @@ export type VisitApi = {
   listVisits(): Promise<VisitSummary[]>;
   getVisit(id: string): Promise<VisitDetails>;
   startVisit(id: string, request: StartVisitRequest): Promise<StartVisitResponse>;
+  finishVisit(id: string, request: FinishVisitRequest): Promise<FinishVisitResponse>;
 };
 
 import { getDefaultApiUrl } from "../auth/auth-api";
@@ -43,6 +46,12 @@ export function createVisitApi(
     },
     startVisit(id, body) {
       return request<StartVisitResponse>(`/visits/${id}/start`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    finishVisit(id, body) {
+      return request<FinishVisitResponse>(`/visits/${id}/finish`, {
         method: "POST",
         body: JSON.stringify(body),
       });
