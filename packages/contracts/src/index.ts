@@ -22,6 +22,25 @@ export type ArrivalLocation = {
   accuracy?: number;
 };
 
+export type EmployeeSummary = {
+  id: UserId;
+  name: string;
+  email: string;
+  role: UserRole;
+};
+
+export type VisitPhoto = {
+  id: string;
+  uri: string;
+  caption?: string;
+  takenAt: string;
+};
+
+export type VisitDeparture = {
+  leftAt: string;
+  location?: ArrivalLocation;
+};
+
 export type VisitSummary = {
   id: VisitId;
   clientId: ClientId;
@@ -44,6 +63,11 @@ export type VisitDetails = VisitSummary & {
     arrivedAt: string;
     location?: ArrivalLocation;
   };
+  departure?: VisitDeparture;
+  durationMinutes?: number;
+  description?: string;
+  attendants?: EmployeeSummary[];
+  photos?: VisitPhoto[];
   finishedAt?: string;
   syncStatus: SyncStatus;
 };
@@ -59,9 +83,22 @@ export type StartVisitResponse = VisitDetails;
 export type FinishVisitRequest = {
   operationId: OperationId;
   finishedAt: string;
+  location?: ArrivalLocation;
+  description?: string;
+  attendantIds?: string[];
+  photos?: VisitPhoto[];
 };
 
 export type FinishVisitResponse = VisitDetails;
+
+export type CreateVisitRequest = {
+  clientId: ClientId;
+  employeeId: UserId;
+  scheduledFor: string;
+  systems: Array<{ id?: string; name: string; type: string }>;
+};
+
+export type CreateVisitResponse = VisitDetails;
 
 export type AuthUser = {
   id: UserId;
