@@ -21,6 +21,10 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     padding: theme.spacing.md,
   },
+  headerLive: {
+    backgroundColor: "#ECFDF5",
+    borderBottomColor: "#A7F3D0",
+  },
   headerTitleRow: {
     alignItems: "center",
     flexDirection: "row",
@@ -33,6 +37,9 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 10,
     width: 32,
+  },
+  iconCircleLive: {
+    backgroundColor: "#059669",
   },
   headerTextWrap: { flex: 1 },
   headerTitle: {
@@ -62,6 +69,29 @@ export const styles = StyleSheet.create({
     color: theme.colors.corporateBlue,
     fontSize: 12,
     fontWeight: "600",
+  },
+  actionContainer: {
+    padding: theme.spacing.md,
+    backgroundColor: "#F0FDF4",
+    borderBottomWidth: 1,
+    borderBottomColor: "#BBF7D0",
+  },
+  okButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#059669",
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+  okButtonDisabled: {
+    opacity: 0.6,
+  },
+  okButtonText: {
+    color: theme.colors.white,
+    fontSize: 15,
+    fontWeight: "700",
   },
   mapContainer: {
     backgroundColor: "#EBF3FA",
@@ -101,6 +131,25 @@ export const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+  },
+  departureCard: {
+    backgroundColor: "#FEF2F2",
+    borderTopWidth: 1,
+    borderTopColor: "#FECACA",
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  departureText: {
+    fontSize: 13,
+    color: "#991B1B",
+    fontWeight: "600",
+  },
+  departureCoords: {
+    fontSize: 12,
+    color: "#7F1D1D",
+    marginTop: 2,
   },
   footerRow: {
     alignItems: "center",

@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Linking, Platform, Pressable, Text, View } from "react-native";
+import React, { useState } from "react";
+import { ActivityIndicator, Linking, Platform, Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import type { ArrivalLocation } from "@qqs/contracts";
 
 import { theme } from "../theme";
 import { styles } from "./LocationMap.styles";
@@ -11,6 +12,11 @@ export type LocationMapProps = {
   address?: string;
   clientName?: string;
   timestamp?: string;
+  isLivePreview?: boolean;
+  onConfirmArrival?: () => void;
+  confirmArrivalLoading?: boolean;
+  departureLocation?: ArrivalLocation;
+  departureTime?: string;
 };
 
 export function LocationMap({
@@ -19,6 +25,11 @@ export function LocationMap({
   address,
   clientName,
   timestamp,
+  isLivePreview = false,
+  onConfirmArrival,
+  confirmArrivalLoading = false,
+  departureLocation,
+  departureTime,
 }: LocationMapProps) {
   const [mapType, setMapType] = useState<"m" | "k">("m"); // m = roadmap, k = satellite
 
@@ -29,18 +40,32 @@ export function LocationMap({
     ? new Date(timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
     : undefined;
 
+  const formattedDepartureTime = departureTime
+    ? new Date(departureTime).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    : undefined;
+
   return (
     <View style={styles.card}>
-      <View style={styles.header}>
+      <View style={[styles.header, isLivePreview && styles.headerLive]}>
         <View style={styles.headerTitleRow}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="location" size={18} color={theme.colors.white} />
+          <View style={[styles.iconCircle, isLivePreview && styles.iconCircleLive]}>
+            <Ionicons
+              name={isLivePreview ? "navigate" : "location"}
+              size={18}
+              color={theme.colors.white}
+            />
           </View>
           <View style={styles.headerTextWrap}>
-            <Text style={styles.headerTitle}>Localização da Chegada</Text>
+            <Text style={styles.headerTitle}>
+              {isLivePreview ? "Localização Atual (GPS ao Vivo)" : "Localização da Chegada"}
+            </Text>
             <Text style={styles.headerSubtitle}>
               {clientName ? `${clientName} • ` : ""}
-              {formattedTime ? `Registrado às ${formattedTime}` : "Confirmado via GPS"}
+              {isLivePreview
+                ? "Confirme sua chegada no local para iniciar o atendimento"
+                : formattedTime
+                  ? `Registrado às ${formattedTime}`
+                  : "Confirmado via GPS"}
             </Text>
           </View>
         </View>
@@ -77,6 +102,27 @@ export function LocationMap({
         )}
       </View>
 
+      {isLivePreview && onConfirmArrival && (
+        <View style={styles.actionContainer}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Confirmar Chegada (OK)"
+            disabled={confirmArrivalLoading}
+            onPress={onConfirmArrival}
+            style={[styles.okButton, confirmArrivalLoading && styles.okButtonDisabled]}
+          >
+            {confirmArrivalLoading ? (
+              <ActivityIndicator color={theme.colors.white} />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={20} color={theme.colors.white} />
+                <Text style={styles.okButtonText}>Confirmar Chegada (OK)</Text>
+              </>
+            )}
+          </Pressable>
+        </View>
+      )}
+
       {address && (
         <View style={styles.addressRow}>
           <Ionicons name="business-outline" size={15} color={theme.colors.darkGray} />
@@ -86,13 +132,33 @@ export function LocationMap({
         </View>
       )}
 
+      {departureTime && (
+        <View style={styles.departureCard}>
+          <Ionicons name="log-out-outline" size={18} color="#DC2626" />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.departureText}>
+              Saída registrada às {formattedDepartureTime ?? departureTime}
+            </Text>
+            {departureLocation && (
+              <Text style={styles.departureCoords}>
+                GPS Saída: {departureLocation.latitude.toFixed(5)}, {departureLocation.longitude.toFixed(5)}
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
+
       <View style={styles.footerRow}>
         <Pressable
           accessibilityRole="button"
           onPress={() => setMapType((curr) => (curr === "m" ? "k" : "m"))}
           style={styles.toggleButton}
         >
-          <Ionicons name={mapType === "m" ? "earth-outline" : "map-outline"} size={14} color={theme.colors.nearBlack} />
+          <Ionicons
+            name={mapType === "m" ? "earth-outline" : "map-outline"}
+            size={14}
+            color={theme.colors.nearBlack}
+          />
           <Text style={styles.toggleText}>
             {mapType === "m" ? "Modo Satélite" : "Modo Mapa"}
           </Text>
