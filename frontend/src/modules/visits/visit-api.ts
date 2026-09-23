@@ -1,4 +1,7 @@
 import type {
+  CreateVisitRequest,
+  CreateVisitResponse,
+  EmployeeSummary,
   FinishVisitRequest,
   FinishVisitResponse,
   StartVisitRequest,
@@ -12,6 +15,8 @@ export type VisitApi = {
   getVisit(id: string): Promise<VisitDetails>;
   startVisit(id: string, request: StartVisitRequest): Promise<StartVisitResponse>;
   finishVisit(id: string, request: FinishVisitRequest): Promise<FinishVisitResponse>;
+  listEmployees?(): Promise<EmployeeSummary[]>;
+  createVisit?(request: CreateVisitRequest): Promise<CreateVisitResponse>;
 };
 
 import { getDefaultApiUrl } from "../auth/auth-api";
@@ -52,6 +57,16 @@ export function createVisitApi(
     },
     finishVisit(id, body) {
       return request<FinishVisitResponse>(`/visits/${id}/finish`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    async listEmployees() {
+      const result = await request<{ items: EmployeeSummary[] }>("/employees");
+      return result.items;
+    },
+    createVisit(body) {
+      return request<CreateVisitResponse>("/visits", {
         method: "POST",
         body: JSON.stringify(body),
       });

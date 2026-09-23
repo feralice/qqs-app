@@ -17,6 +17,7 @@ const activeUser: User = {
 
 function usersWith(...users: User[]): UserRepository {
   return {
+    list: async () => users,
     findByEmail: async (email) => users.find((user) => user.email === email),
     findById: async (id) => users.find((user) => user.id === id),
     save: async () => undefined,

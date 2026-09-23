@@ -5,6 +5,7 @@ import type { User } from "../domain/user.js";
 export type UserRepository = {
   findByEmail(email: string): Promise<User | undefined>;
   findById(id: UserId): Promise<User | undefined>;
+  list(): Promise<User[]>;
   save(user: User): Promise<void>;
 };
 

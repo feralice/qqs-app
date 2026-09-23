@@ -1,10 +1,12 @@
 import type {
   ArrivalLocation,
   ClientId,
+  EmployeeSummary,
+  OperationId,
   UserId,
   VisitId,
+  VisitPhoto,
   VisitStatus,
-  OperationId,
 } from "@qqs/contracts";
 
 export type Visit = {
@@ -19,6 +21,12 @@ export type Visit = {
   arrivedAt?: string;
   arrivalLocation?: ArrivalLocation;
   lastStartOperationId?: OperationId;
+  leftAt?: string;
+  departureLocation?: ArrivalLocation;
+  durationMinutes?: number;
+  description?: string;
+  attendants?: EmployeeSummary[];
+  photos?: VisitPhoto[];
   finishedAt?: string;
   lastFinishOperationId?: OperationId;
 };

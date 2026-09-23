@@ -2,9 +2,21 @@ import { StyleSheet } from "react-native";
 import { theme } from "../../shared/ui/theme";
 
 export const styles = StyleSheet.create({
-  container: { padding: theme.spacing.lg },
-  title: { color: theme.colors.darkGray, fontSize: 26, fontWeight: "800", letterSpacing: -0.3 },
-  address: { color: "#555E68", fontSize: 14, marginTop: 4 },
+  container: {
+    padding: theme.spacing.lg,
+    paddingBottom: 48,
+  },
+  title: {
+    color: theme.colors.darkGray,
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+  },
+  address: {
+    color: "#555E68",
+    fontSize: 14,
+    marginTop: 4,
+  },
   badge: {
     alignSelf: "flex-start",
     backgroundColor: theme.colors.lightBlue,
@@ -16,7 +28,12 @@ export const styles = StyleSheet.create({
   badgeInProgress: { backgroundColor: theme.colors.aqua },
   badgeCompleted: { backgroundColor: "#D4EFDF" },
   badgeText: { color: theme.colors.nearBlack, fontSize: 12, fontWeight: "700" },
-  section: { color: theme.colors.darkGray, fontSize: 18, fontWeight: "800", marginTop: 28 },
+  section: {
+    color: theme.colors.darkGray,
+    fontSize: 18,
+    fontWeight: "800",
+    marginTop: 24,
+  },
   systemsCard: {
     backgroundColor: theme.colors.white,
     borderColor: "#E2EEF8",
@@ -24,10 +41,6 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: 12,
     padding: theme.spacing.md,
-    shadowColor: "#0876C9",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
     elevation: 2,
   },
   systemRow: {
@@ -61,7 +74,13 @@ export const styles = StyleSheet.create({
     padding: theme.spacing.md,
     textAlign: "center",
   },
-  arrivalButton: { marginTop: 24 },
-  finishButton: { backgroundColor: "#27AE60", marginTop: 20 },
+  arrivalButton: {
+    backgroundColor: theme.colors.corporateBlue,
+    marginTop: 24,
+  },
+  finishButton: {
+    backgroundColor: "#16A34A",
+    marginTop: 24,
+  },
   mapButton: { marginTop: theme.spacing.md },
 });
