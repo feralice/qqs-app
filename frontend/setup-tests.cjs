@@ -4,6 +4,26 @@ const orig = Module._resolveFilename;
 
 global.React = require("react");
 
+if (typeof window === "undefined") {
+  global.window = {
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    Image: class {
+      set src(v) {
+        if (this.onload) setTimeout(() => this.onload(), 0);
+      }
+    },
+  };
+}
+
+if (typeof document === "undefined") {
+  global.document = {
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    createElement: () => ({ style: {} }),
+  };
+}
+
 const iconMockPath = path.resolve(__dirname, "mock-icons.cjs");
 
 Module._resolveFilename = function(req, ...args) {
