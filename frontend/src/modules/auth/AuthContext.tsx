@@ -70,6 +70,10 @@ export function AuthProvider({
   );
 }
 
+export function useOptionalAuth(): AuthState | undefined {
+  return useContext(AuthContext);
+}
+
 export function useAuth(): AuthState {
   const context = useContext(AuthContext);
   if (!context) {

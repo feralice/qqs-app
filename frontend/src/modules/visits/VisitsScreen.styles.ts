@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   title: {
     color: theme.colors.darkGray,
@@ -33,6 +33,27 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
+  filterBar: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  filterLabel: {
+    color: "#64748B",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  allVisitsButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  allVisitsText: {
+    color: theme.colors.corporateBlue,
+    fontSize: 13,
+    fontWeight: "700",
+  },
   list: { flexGrow: 1, paddingTop: 4 },
   emptyWrap: {
     alignItems: "center",
@@ -42,7 +63,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     flex: 1,
     justifyContent: "center",
-    marginTop: 40,
+    marginTop: 24,
     padding: theme.spacing.lg * 1.5,
   },
   emptyIconCircle: {
