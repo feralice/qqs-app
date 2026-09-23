@@ -1,0 +1,45 @@
+const Module = require("module");
+const path = require("path");
+const orig = Module._resolveFilename;
+
+global.React = require("react");
+
+const iconMockPath = path.resolve(__dirname, "mock-icons.cjs");
+
+Module._resolveFilename = function(req, ...args) {
+  if (req === "react-native") return orig.call(this, "react-native-web", ...args);
+  if (req === "@expo/vector-icons" || req.startsWith("@expo/vector-icons/")) {
+    return iconMockPath;
+  }
+  return orig.call(this, req, ...args);
+};
+
+// Mock FlatList in Node test environment to avoid infinite VirtualizedList scheduling timers
+const ReactNativeWeb = require("react-native-web");
+const React = require("react");
+
+if (ReactNativeWeb.FlatList) {
+  function MockFlatList(props) {
+    const { data = [], renderItem, ListEmptyComponent, ListHeaderComponent, ListFooterComponent, contentContainerStyle } = props;
+    const header = typeof ListHeaderComponent === "function" ? React.createElement(ListHeaderComponent) : ListHeaderComponent;
+    const footer = typeof ListFooterComponent === "function" ? React.createElement(ListFooterComponent) : ListFooterComponent;
+    const empty = typeof ListEmptyComponent === "function" ? React.createElement(ListEmptyComponent) : ListEmptyComponent;
+
+    return React.createElement(
+      ReactNativeWeb.View,
+      { style: contentContainerStyle },
+      header,
+      data && data.length > 0
+        ? data.map((item, index) =>
+            React.createElement(
+              ReactNativeWeb.View,
+              { key: (item && item.id) ? item.id : index },
+              renderItem ? renderItem({ item, index, separators: {} }) : null
+            )
+          )
+        : empty,
+      footer
+    );
+  }
+  ReactNativeWeb.FlatList = MockFlatList;
+}
