@@ -30,6 +30,22 @@ const seedUsers: User[] = [
     role: "employee",
     active: true,
   },
+  {
+    id: "employee-002",
+    name: "Carlos Silva",
+    email: "carlos.silva@qqs.app",
+    passwordHash: bcrypt.hashSync("Tecnico123!", 10),
+    role: "employee",
+    active: true,
+  },
+  {
+    id: "employee-003",
+    name: "Mariana Souza",
+    email: "mariana.souza@qqs.app",
+    passwordHash: bcrypt.hashSync("Tecnico123!", 10),
+    role: "employee",
+    active: true,
+  },
 ];
 
 export class InMemoryUserRepository implements UserRepository {
@@ -41,6 +57,10 @@ export class InMemoryUserRepository implements UserRepository {
 
   async findById(id: string): Promise<User | undefined> {
     return this.users.get(id);
+  }
+
+  async list(): Promise<User[]> {
+    return [...this.users.values()];
   }
 
   async save(user: User): Promise<void> {

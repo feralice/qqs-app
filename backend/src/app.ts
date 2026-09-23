@@ -15,9 +15,10 @@ import { authenticate, authorize } from "./modules/auth/presentation/authenticat
 export function createApp(): Express {
   const app = express();
 
+  const userRepository = new InMemoryUserRepository();
   const tokens = new JwtTokenService(process.env.JWT_SECRET ?? "dev-only-secret-troque-em-producao");
   const authDeps = {
-    users: new InMemoryUserRepository(),
+    users: userRepository,
     hasher: new BcryptPasswordHasher(),
     tokens,
     refreshTokens: new InMemoryRefreshTokenRepository(),
@@ -36,7 +37,12 @@ export function createApp(): Express {
 
   // Tudo registrado a partir daqui exige login.
   app.use(authenticate(tokens));
-  app.use(visitRoutes(new InMemoryVisitRepository(), { requireSupervisor: authorize("supervisor") }));
+  app.use(
+    visitRoutes(new InMemoryVisitRepository(), {
+      requireSupervisor: authorize("supervisor"),
+      userRepository,
+    }),
+  );
 
   return app;
 }
