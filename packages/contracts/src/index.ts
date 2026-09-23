@@ -86,6 +86,7 @@ export type FinishVisitRequest = {
   location?: ArrivalLocation;
   description?: string;
   attendantIds?: string[];
+  attendants?: EmployeeSummary[];
   photos?: VisitPhoto[];
 };
 

@@ -26,6 +26,9 @@ export function VisitTimer({
     const interval = setInterval(() => {
       setElapsedSeconds(calculateElapsed(arrivedAt, finishedAt));
     }, 1000);
+    if (typeof interval?.unref === "function") {
+      interval.unref();
+    }
 
     return () => clearInterval(interval);
   }, [arrivedAt, finishedAt, status]);

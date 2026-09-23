@@ -8,6 +8,7 @@ import type { PasswordHasher, RefreshTokenRepository, StoredRefreshToken, TokenS
 function fakeUsers(...seed: User[]): UserRepository {
   const users = new Map(seed.map((user) => [user.email, user]));
   return {
+    list: async () => [...users.values()],
     findByEmail: async (email) => users.get(email),
     findById: async (id) => [...users.values()].find((user) => user.id === id),
     save: async (user) => {

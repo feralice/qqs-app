@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: theme.spacing.xs,
+    marginBottom: 4,
   },
   titleRow: {
     flexDirection: "row",
