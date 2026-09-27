@@ -11,6 +11,7 @@ import { JwtTokenService } from "./modules/auth/infrastructure/jwt-token-service
 import { LoginRateLimiter } from "./modules/auth/infrastructure/login-rate-limiter.js";
 import { authRoutes } from "./modules/auth/presentation/auth-routes.js";
 import { authenticate, authorize } from "./modules/auth/presentation/authenticate.js";
+import { adminRoutes } from "./modules/admin/presentation/admin-routes.js";
 
 export function createApp(): Express {
   const app = express();
@@ -37,10 +38,18 @@ export function createApp(): Express {
 
   // Tudo registrado a partir daqui exige login.
   app.use(authenticate(tokens));
+  const visitRepository = new InMemoryVisitRepository();
   app.use(
-    visitRoutes(new InMemoryVisitRepository(), {
+    visitRoutes(visitRepository, {
       requireSupervisor: authorize("supervisor"),
       userRepository,
+    }),
+  );
+  app.use(
+    "/admin",
+    adminRoutes(visitRepository, {
+      requireSupervisor: authorize("supervisor"),
+      listEmployees: async () => (await userRepository.list()).filter((user) => user.active),
     }),
   );
 

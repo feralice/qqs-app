@@ -135,3 +135,32 @@ export type RegisterRequest = {
 };
 
 export type RegisterResponse = LoginResponse;
+
+export type AdminDashboardCounts = {
+  scheduled: number;
+  inProgress: number;
+  completed: number;
+  overdue: number;
+};
+
+export type AdminAlertSummary = {
+  id: string;
+  visitId: VisitId;
+  type: "overdue" | "problem";
+  message: string;
+  createdAt: string;
+};
+
+export type EmployeeOperationalStatus = EmployeeSummary & {
+  status: "available" | "busy" | "offline";
+  activeVisits: number;
+};
+
+export type AdminDashboardSummary = {
+  date: string;
+  counts: AdminDashboardCounts;
+  alerts: AdminAlertSummary[];
+  employees: EmployeeOperationalStatus[];
+  lastUpdatedAt: string;
+  isLoaded: boolean;
+};

@@ -40,6 +40,7 @@ test("AdminHomeScreen renders supervisor dashboard, calendar strip, metrics and 
 
   const output = JSON.stringify(tree!.toJSON());
   assert.match(output, /Painel de Controle e Gestão Operacional/);
+  assert.match(output, /Resumo do dia/);
   assert.match(output, /Supervisor/);
   assert.match(output, /\+ Agendar Nova Visita/);
   assert.match(output, /Agenda Semanal/);

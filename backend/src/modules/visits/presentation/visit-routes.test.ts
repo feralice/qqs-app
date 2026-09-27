@@ -167,3 +167,30 @@ test("POST /visits allows supervisor to schedule a new visit", async () => {
   assert.equal(data.status, "assigned");
   assert.equal(data.systemsCount, 2);
 });
+
+test("POST /admin/visits/:id/reschedule allows supervisor to change the schedule idempotently", async () => {
+  const app = createApp();
+  const token = await login(app, "supervisor");
+  const options = {
+    method: "POST" as const,
+    url: "/admin/visits/visit-001/reschedule",
+    headers: { authorization: `Bearer ${token}` },
+    body: { operationId: "admin-reschedule-1", scheduledFor: "2026-09-28T10:00:00.000Z" },
+  };
+
+  const first = await call(app, options);
+  const second = await call(app, options);
+
+  assert.equal(first.statusCode, 200);
+  assert.equal(second.statusCode, 200);
+  assert.deepEqual(second._getJSONData(), first._getJSONData());
+  assert.equal(first._getJSONData().scheduledFor, "2026-09-28T10:00:00.000Z");
+});
+
+test("GET /admin/dashboard returns the supervisor summary", async () => {
+  const response = await request({ method: "GET", url: "/admin/dashboard?date=2026-09-21" }, "supervisor");
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response._getJSONData().date, "2026-09-21");
+  assert.equal(response._getJSONData().counts.scheduled, 1);
+});

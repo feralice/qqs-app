@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { EmployeeSummary, VisitDetails } from "@qqs/contracts";
+import type { AdminDashboardSummary as DashboardSummary, EmployeeSummary, VisitDetails } from "@qqs/contracts";
 
 import { useOptionalAuth } from "../auth/AuthContext";
 import { StatCard } from "../../shared/ui/components/StatCard";
@@ -10,6 +10,7 @@ import { WeekCalendarStrip } from "../../shared/ui/components/WeekCalendarStrip"
 import { AdminScheduleModal } from "./AdminScheduleModal";
 import { theme } from "../../shared/ui/theme";
 import { styles } from "./AdminHomeScreen.styles";
+import { AdminDashboardSummary } from "./AdminDashboardSummary";
 
 const DEFAULT_VISITS: VisitDetails[] = [
   {
@@ -100,6 +101,7 @@ export type AdminHomeScreenProps = {
   }) => Promise<void> | void;
   onOpenVisit?: (visitId: string) => void;
   initialDate?: string;
+  dashboardSummary?: DashboardSummary;
 };
 
 export function AdminHomeScreen({
@@ -109,6 +111,7 @@ export function AdminHomeScreen({
   onScheduleVisit,
   onOpenVisit,
   initialDate,
+  dashboardSummary,
 }: AdminHomeScreenProps) {
   const auth = useOptionalAuth();
   const displayName = userName ?? auth?.user?.name ?? "Administrador";
@@ -141,6 +144,42 @@ export function AdminHomeScreen({
   const visitsForDay = useMemo(() => {
     return allVisits.filter((v) => v.scheduledFor?.startsWith(selectedDate));
   }, [allVisits, selectedDate]);
+
+  const localSummary = useMemo<DashboardSummary>(() => {
+    const dayVisits = allVisits.filter((visit) => visit.scheduledFor?.startsWith(selectedDate));
+    const visitEmployeeId = (visit: VisitDetails & { employeeId?: string }) => visit.employeeId;
+    const now = new Date().toISOString();
+    const overdue = dayVisits.filter(
+      (visit) => visit.status !== "completed" && Boolean(visit.scheduledFor && visit.scheduledFor < now),
+    );
+    return {
+      date: selectedDate,
+      counts: {
+        scheduled: dayVisits.filter((visit) => visit.status === "assigned").length,
+        inProgress: dayVisits.filter((visit) => visit.status === "in_progress").length,
+        completed: dayVisits.filter((visit) => visit.status === "completed").length,
+        overdue: overdue.length,
+      },
+      alerts: overdue.map((visit) => ({
+        id: `overdue:${visit.id}:${selectedDate}`,
+        visitId: visit.id,
+        type: "overdue" as const,
+        message: `Visita atrasada: ${visit.clientName}`,
+        createdAt: now,
+      })),
+      employees: employees.map((employee) => ({
+        ...employee,
+        activeVisits: dayVisits.filter(
+          (visit) => visitEmployeeId(visit) === employee.id && visit.status === "in_progress",
+        ).length,
+        status: dayVisits.some(
+          (visit) => visitEmployeeId(visit) === employee.id && visit.status === "in_progress",
+        ) ? ("busy" as const) : ("available" as const),
+      })),
+      lastUpdatedAt: now,
+      isLoaded: true,
+    };
+  }, [allVisits, employees, selectedDate]);
 
   async function handleScheduleVisit(data: {
     clientName: string;
@@ -191,6 +230,11 @@ export function AdminHomeScreen({
         <Ionicons name="add-circle" size={20} color={theme.colors.white} />
         <Text style={styles.scheduleButtonText}>+ Agendar Nova Visita</Text>
       </Pressable>
+
+      <AdminDashboardSummary
+        summary={dashboardSummary ?? localSummary}
+        onOpenVisit={onOpenVisit}
+      />
 
       {/* Calendário Semanal Interativo */}
       <Text style={styles.sectionTitle}>Agenda Semanal</Text>
