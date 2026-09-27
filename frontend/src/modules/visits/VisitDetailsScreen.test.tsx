@@ -5,9 +5,9 @@ import { create, act } from "react-test-renderer";
 
 import type { VisitDetails, EmployeeSummary, VisitPhoto } from "@qqs/contracts";
 
-import { VisitDetailsScreen } from "./VisitDetailsScreen.js";
-import { VisitStore } from "./visit-store.js";
-import { SyncQueue } from "../sync/sync-queue.js";
+import { VisitDetailsScreen } from "./VisitDetailsScreen";
+import { VisitStore } from "./visit-store";
+import { SyncQueue } from "../sync/sync-queue";
 
 const sampleVisit: VisitDetails = {
   id: "visit-001",

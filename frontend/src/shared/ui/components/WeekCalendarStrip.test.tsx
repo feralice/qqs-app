@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import React from "react";
 import { create, act } from "react-test-renderer";
 
-import { WeekCalendarStrip } from "./WeekCalendarStrip.js";
+import { WeekCalendarStrip } from "./WeekCalendarStrip";
 
 test("WeekCalendarStrip renders 7 days of the week and highlights the selected day", () => {
   let selected = "2026-09-22";

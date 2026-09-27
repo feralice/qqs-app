@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import type { LocationProvider, LocationResult } from "./location-provider.js";
+import type { LocationProvider, LocationResult } from "./location-provider";
 
 test("location provider exposes a granted result without native API details", async () => {
   const provider: LocationProvider = {

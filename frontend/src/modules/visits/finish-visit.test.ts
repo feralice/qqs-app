@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 
 import type { ArrivalLocation, EmployeeSummary, VisitDetails, VisitPhoto } from "@qqs/contracts";
 
-import { SyncQueue } from "../sync/sync-queue.js";
-import { VisitStore } from "./visit-store.js";
-import { finishVisit } from "./finish-visit.js";
+import { SyncQueue } from "../sync/sync-queue";
+import { VisitStore } from "./visit-store";
+import { finishVisit } from "./finish-visit";
 
 const initialVisit: VisitDetails = {
   id: "visit-001",

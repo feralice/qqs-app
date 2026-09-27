@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { SyncQueue } from "../sync/sync-queue.js";
-import type { LocationProvider } from "../location/location-provider.js";
-import { startVisit } from "./start-visit.js";
-import { VisitStore } from "./visit-store.js";
+import { SyncQueue } from "../sync/sync-queue";
+import type { LocationProvider } from "../location/location-provider";
+import { startVisit } from "./start-visit";
+import { VisitStore } from "./visit-store";
 
 test("startVisit queues local arrival before remote synchronization", async () => {
   const queue = new SyncQueue();

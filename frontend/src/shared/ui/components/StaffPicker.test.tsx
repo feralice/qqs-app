@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import React from "react";
 import { create, act } from "react-test-renderer";
 
-import { StaffPicker } from "./StaffPicker.js";
+import { StaffPicker } from "./StaffPicker";
 
 test("StaffPicker renders list of employees and allows toggling selection", () => {
   const employees = [

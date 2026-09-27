@@ -3,13 +3,13 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { EmployeeSummary, VisitDetails } from "@qqs/contracts";
 
-import { useOptionalAuth } from "../auth/AuthContext.js";
-import { StatCard } from "../../shared/ui/components/StatCard.js";
-import { Badge } from "../../shared/ui/components/Badge.js";
-import { WeekCalendarStrip } from "../../shared/ui/components/WeekCalendarStrip.js";
-import { AdminScheduleModal } from "./AdminScheduleModal.js";
-import { theme } from "../../shared/ui/theme.js";
-import { styles } from "./AdminHomeScreen.styles.js";
+import { useOptionalAuth } from "../auth/AuthContext";
+import { StatCard } from "../../shared/ui/components/StatCard";
+import { Badge } from "../../shared/ui/components/Badge";
+import { WeekCalendarStrip } from "../../shared/ui/components/WeekCalendarStrip";
+import { AdminScheduleModal } from "./AdminScheduleModal";
+import { theme } from "../../shared/ui/theme";
+import { styles } from "./AdminHomeScreen.styles";
 
 const DEFAULT_VISITS: VisitDetails[] = [
   {

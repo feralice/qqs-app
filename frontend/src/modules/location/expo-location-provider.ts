@@ -1,6 +1,6 @@
 import * as ExpoLocation from "expo-location";
 
-import type { LocationProvider, LocationResult } from "./location-provider.js";
+import type { LocationProvider, LocationResult } from "./location-provider";
 
 export class ExpoLocationProvider implements LocationProvider {
   async getArrivalLocation(): Promise<LocationResult> {

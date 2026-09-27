@@ -11,8 +11,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import type { EmployeeSummary } from "@qqs/contracts";
 
-import { theme } from "../../shared/ui/theme.js";
-import { styles } from "./AdminScheduleModal.styles.js";
+import { theme } from "../../shared/ui/theme";
+import { styles } from "./AdminScheduleModal.styles";
 
 export type AdminScheduleModalProps = {
   visible: boolean;

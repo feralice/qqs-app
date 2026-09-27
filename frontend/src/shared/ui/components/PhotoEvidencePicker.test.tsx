@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import React from "react";
 import { create, act } from "react-test-renderer";
 
-import { PhotoEvidencePicker } from "./PhotoEvidencePicker.js";
+import { PhotoEvidencePicker } from "./PhotoEvidencePicker";
 
 test("PhotoEvidencePicker renders photos and allows removing and caption updates", () => {
   const photos = [

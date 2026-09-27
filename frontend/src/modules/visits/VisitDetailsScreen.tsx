@@ -2,19 +2,19 @@ import React, { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import type { EmployeeSummary, VisitDetails, VisitPhoto } from "@qqs/contracts";
 
-import type { LocationProvider } from "../location/location-provider.js";
-import { startVisit } from "./start-visit.js";
-import { finishVisit } from "./finish-visit.js";
-import type { VisitApi } from "./visit-api.js";
-import { SyncQueue } from "../sync/sync-queue.js";
-import { VisitStore } from "./visit-store.js";
-import { LocationMap } from "../../shared/ui/components/LocationMap.js";
-import { VisitTimer } from "./VisitTimer.js";
-import { StaffPicker } from "../../shared/ui/components/StaffPicker.js";
-import { ServiceReportCard } from "../../shared/ui/components/ServiceReportCard.js";
-import { PhotoEvidencePicker } from "../../shared/ui/components/PhotoEvidencePicker.js";
-import { Button } from "../../shared/ui/components/Button.js";
-import { styles } from "./VisitDetailsScreen.styles.js";
+import type { LocationProvider } from "../location/location-provider";
+import { startVisit } from "./start-visit";
+import { finishVisit } from "./finish-visit";
+import type { VisitApi } from "./visit-api";
+import { SyncQueue } from "../sync/sync-queue";
+import { VisitStore } from "./visit-store";
+import { LocationMap } from "../../shared/ui/components/LocationMap";
+import { VisitTimer } from "./VisitTimer";
+import { StaffPicker } from "../../shared/ui/components/StaffPicker";
+import { ServiceReportCard } from "../../shared/ui/components/ServiceReportCard";
+import { PhotoEvidencePicker } from "../../shared/ui/components/PhotoEvidencePicker";
+import { Button } from "../../shared/ui/components/Button";
+import { styles } from "./VisitDetailsScreen.styles";
 
 const DEFAULT_EMPLOYEES: EmployeeSummary[] = [
   { id: "employee-001", name: "Técnico Responsável", email: "tecnico@qqs.com", role: "employee" },

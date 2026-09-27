@@ -5,8 +5,8 @@ import { create, act } from "react-test-renderer";
 
 import type { EmployeeSummary, VisitDetails } from "@qqs/contracts";
 
-import { AdminHomeScreen } from "./AdminHomeScreen.js";
-import { AdminScheduleModal } from "./AdminScheduleModal.js";
+import { AdminHomeScreen } from "./AdminHomeScreen";
+import { AdminScheduleModal } from "./AdminScheduleModal";
 
 const testEmployees: EmployeeSummary[] = [
   { id: "emp-1", name: "Carlos Silva", email: "carlos@qqs.com", role: "employee" },

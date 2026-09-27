@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import React from "react";
 import { create, act } from "react-test-renderer";
 
-import { VisitsScreen } from "./VisitsScreen.js";
+import { VisitsScreen } from "./VisitsScreen";
 
 const mockVisits = [
   {

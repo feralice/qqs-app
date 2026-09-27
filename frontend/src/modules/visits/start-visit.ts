@@ -1,9 +1,9 @@
 import type { ArrivalLocation, OperationId } from "@qqs/contracts";
 
-import type { LocationProvider } from "../location/location-provider.js";
-import type { SyncQueue } from "../sync/sync-queue.js";
-import type { VisitApi } from "./visit-api.js";
-import { VisitStore } from "./visit-store.js";
+import type { LocationProvider } from "../location/location-provider";
+import type { SyncQueue } from "../sync/sync-queue";
+import type { VisitApi } from "./visit-api";
+import { VisitStore } from "./visit-store";
 
 export type StartVisitInput = {
   visitId: string;

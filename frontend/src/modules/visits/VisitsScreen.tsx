@@ -4,10 +4,10 @@ import { Ionicons } from "@expo/vector-icons";
 
 import type { VisitDetails } from "@qqs/contracts";
 
-import { VisitCard } from "./VisitCard.js";
-import { WeekCalendarStrip } from "../../shared/ui/components/WeekCalendarStrip.js";
-import { styles } from "./VisitsScreen.styles.js";
-import { theme } from "../../shared/ui/theme.js";
+import { VisitCard } from "./VisitCard";
+import { WeekCalendarStrip } from "../../shared/ui/components/WeekCalendarStrip";
+import { styles } from "./VisitsScreen.styles";
+import { theme } from "../../shared/ui/theme";
 
 export type VisitsScreenProps = {
   visits: VisitDetails[];
