@@ -13,6 +13,7 @@ function toDetails(visit: Awaited<ReturnType<InMemoryVisitRepository["findById"]
   return {
     id: visit.id,
     clientId: visit.clientId,
+    employeeId: visit.employeeId,
     clientName: visit.clientName ?? visit.clientId,
     scheduledFor: visit.scheduledFor ?? new Date(0).toISOString(),
     status: visit.status,
@@ -61,6 +62,7 @@ export function visitRoutes(
     const items: VisitSummary[] = visits.map((visit) => ({
       id: visit.id,
       clientId: visit.clientId,
+      employeeId: visit.employeeId,
       clientName: visit.clientName ?? visit.clientId,
       scheduledFor: visit.scheduledFor ?? new Date(0).toISOString(),
       status: visit.status,
@@ -79,12 +81,13 @@ export function visitRoutes(
     response.json(details);
   });
 
-  router.post("/visits", options.requireSupervisor, async (request, response) => {
+  router.post("/visits", async (request, response) => {
+    const isSupervisor = request.auth?.role === "supervisor";
     const visitId = request.body.id ?? `visit-${Date.now()}`;
     const visit = await repository.save({
       id: visitId,
       clientId: request.body.clientId,
-      employeeId: request.body.employeeId ?? "employee-001",
+      employeeId: isSupervisor ? (request.body.employeeId ?? "employee-001") : (request.auth?.sub ?? "employee-001"),
       clientName: request.body.clientName,
       clientAddress: request.body.clientAddress,
       scheduledFor: request.body.scheduledFor ?? new Date().toISOString(),

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ActivityIndicator, Linking, Platform, Pressable, Text, View } from "react-native";
+import { WebView } from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
 import type { ArrivalLocation } from "@qqs/contracts";
 
@@ -35,6 +36,18 @@ export function LocationMap({
 
   const googleEmbedUrl = `https://maps.google.com/maps?q=${latitude},${longitude}&t=${mapType}&z=16&ie=UTF8&iwloc=&output=embed`;
   const externalMapUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+  const openStreetMapHtml = `<!doctype html>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>html,body,#map{height:100%;margin:0} .leaflet-control-attribution{font-size:9px}</style>
+</head><body><div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const point=[${latitude},${longitude}];
+const map=L.map('map',{zoomControl:true}).setView(point,16);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+L.marker(point).addTo(map).bindPopup(${JSON.stringify(clientName ?? "Local da visita")}).openPopup();
+</script></body></html>`;
 
   const formattedTime = timestamp
     ? new Date(timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
@@ -92,13 +105,12 @@ export function LocationMap({
             allowFullScreen
           />
         ) : (
-          <View style={styles.nativeFallback}>
-            <Ionicons name="map-outline" size={36} color={theme.colors.corporateBlue} />
-            <Text style={styles.fallbackTitle}>Mapa GPS Registrado</Text>
-            <Text style={styles.fallbackText}>
-              Lat: {latitude.toFixed(5)} | Long: {longitude.toFixed(5)}
-            </Text>
-          </View>
+          <WebView
+            accessibilityLabel="Mapa OpenStreetMap da localização"
+            originWhitelist={["*"]}
+            source={{ html: openStreetMapHtml }}
+            style={styles.webMap}
+          />
         )}
       </View>
 

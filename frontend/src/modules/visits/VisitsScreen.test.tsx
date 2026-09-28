@@ -76,3 +76,19 @@ test("VisitsScreen allows viewing all visits across dates", () => {
   assert.match(output, /Coca-Cola FEMSA/);
   assert.match(output, /Exibindo todas as visitas/);
 });
+
+test("VisitsScreen lets a technician open the create visit form", () => {
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(React.createElement(VisitsScreen, {
+      initialDate: "2026-09-21",
+      visits: mockVisits,
+      onOpen: () => {},
+    }));
+  });
+
+  assert.match(JSON.stringify(tree!.toJSON()), /Adicionar visita/);
+  const button = tree!.root.findByProps({ accessibilityLabel: "Adicionar nova visita" });
+  act(() => button.props.onPress());
+  assert.match(JSON.stringify(tree!.toJSON()), /Salvar visita do técnico/);
+});

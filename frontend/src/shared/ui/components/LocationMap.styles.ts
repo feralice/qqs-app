@@ -105,6 +105,9 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     padding: theme.spacing.lg,
   },
+  webMap: {
+    flex: 1,
+  },
   fallbackTitle: {
     color: theme.colors.darkGray,
     fontSize: 16,

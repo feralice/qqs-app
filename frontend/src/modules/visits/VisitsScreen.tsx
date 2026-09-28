@@ -8,26 +8,31 @@ import { VisitCard } from "./VisitCard";
 import { WeekCalendarStrip } from "../../shared/ui/components/WeekCalendarStrip";
 import { styles } from "./VisitsScreen.styles";
 import { theme } from "../../shared/ui/theme";
+import { TechnicianCreateVisitModal, type TechnicianVisitDraft } from "./TechnicianCreateVisitModal";
 
 export type VisitsScreenProps = {
   visits: VisitDetails[];
   onOpen: (visitId: string) => void;
   initialDate?: string;
+  onCreateVisit?: (draft: TechnicianVisitDraft) => Promise<void> | void;
 };
 
 export function VisitsScreen({
   visits,
   onOpen,
   initialDate,
+  onCreateVisit,
 }: VisitsScreenProps) {
+  const [allVisits, setAllVisits] = useState(visits);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const todayStr = useMemo(() => new Date().toISOString().substring(0, 10), []);
 
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     if (initialDate) return initialDate;
-    if (visits.some((v) => v.scheduledFor?.startsWith(todayStr))) {
+    if (allVisits.some((v) => v.scheduledFor?.startsWith(todayStr))) {
       return todayStr;
     }
-    const firstScheduled = visits.find((v) => v.scheduledFor)?.scheduledFor;
+    const firstScheduled = allVisits.find((v) => v.scheduledFor)?.scheduledFor;
     return firstScheduled ? firstScheduled.substring(0, 10) : todayStr;
   });
 
@@ -35,19 +40,35 @@ export function VisitsScreen({
 
   const visitCountsByDate = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const v of visits) {
+    for (const v of allVisits) {
       if (v.scheduledFor) {
         const d = v.scheduledFor.substring(0, 10);
         counts[d] = (counts[d] ?? 0) + 1;
       }
     }
     return counts;
-  }, [visits]);
+  }, [allVisits]);
 
   const displayedVisits = useMemo(() => {
-    if (!filterByDate) return visits;
-    return visits.filter((v) => v.scheduledFor?.startsWith(selectedDate));
-  }, [visits, selectedDate, filterByDate]);
+    if (!filterByDate) return allVisits;
+    return allVisits.filter((v) => v.scheduledFor?.startsWith(selectedDate));
+  }, [allVisits, selectedDate, filterByDate]);
+
+  async function handleCreateVisit(draft: TechnicianVisitDraft) {
+    const newVisit: VisitDetails = {
+      id: `visit-local-${Date.now()}`,
+      clientId: `client-local-${Date.now()}`,
+      clientName: draft.clientName,
+      clientAddress: draft.clientAddress,
+      scheduledFor: draft.scheduledFor,
+      status: "assigned",
+      systemsCount: draft.systems.length,
+      systems: draft.systems.map((system, index) => ({ ...system, id: `system-local-${index}` })),
+      syncStatus: "pending",
+    };
+    setAllVisits((current) => [newVisit, ...current]);
+    await onCreateVisit?.(draft);
+  }
 
   function handleSelectDate(date: string) {
     setSelectedDate(date);
@@ -67,11 +88,21 @@ export function VisitsScreen({
         </View>
       </View>
 
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Adicionar nova visita"
+        onPress={() => setCreateModalOpen(true)}
+        style={{ backgroundColor: theme.colors.corporateBlue, borderRadius: 10, marginBottom: 10, padding: 12 }}
+      >
+        <Text style={{ color: theme.colors.white, fontWeight: "700", textAlign: "center" }}>+ Adicionar visita</Text>
+      </Pressable>
+
       {/* Week Calendar Strip */}
       <WeekCalendarStrip
         selectedDate={selectedDate}
         onSelectDate={handleSelectDate}
         visitCountsByDate={visitCountsByDate}
+        enableMonthView
       />
 
       <View style={styles.filterBar}>
@@ -125,6 +156,11 @@ export function VisitsScreen({
         renderItem={({ item }) => (
           <VisitCard visit={item} onPress={() => onOpen(item.id)} />
         )}
+      />
+      <TechnicianCreateVisitModal
+        visible={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSave={handleCreateVisit}
       />
     </View>
   );

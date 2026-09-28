@@ -9,6 +9,7 @@ export type WeekCalendarStripProps = {
   selectedDate: string; // YYYY-MM-DD
   onSelectDate: (date: string) => void;
   visitCountsByDate?: Record<string, number>;
+  enableMonthView?: boolean;
 };
 
 const DAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -36,9 +37,11 @@ export function WeekCalendarStrip({
   selectedDate,
   onSelectDate,
   visitCountsByDate = {},
+  enableMonthView = false,
 }: WeekCalendarStripProps) {
   const initialDate = selectedDate ? new Date(`${selectedDate}T00:00:00`) : new Date();
   const [referenceDate, setReferenceDate] = useState<Date>(initialDate);
+  const [viewMode, setViewMode] = useState<"week" | "month">("week");
 
   const startOfWeek = getStartOfWeek(referenceDate);
   const weekDays = Array.from({ length: 7 }, (_, i) => {
@@ -62,6 +65,18 @@ export function WeekCalendarStrip({
     setReferenceDate(next);
   }
 
+  function handlePrevMonth() {
+    const previous = new Date(referenceDate);
+    previous.setMonth(previous.getMonth() - 1);
+    setReferenceDate(previous);
+  }
+
+  function handleNextMonth() {
+    const next = new Date(referenceDate);
+    next.setMonth(next.getMonth() + 1);
+    setReferenceDate(next);
+  }
+
   function handleToday() {
     const now = new Date();
     setReferenceDate(now);
@@ -71,15 +86,26 @@ export function WeekCalendarStrip({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.monthTitle}>{monthTitle}</Text>
+        <View>
+          <Text style={styles.monthTitle}>{monthTitle}</Text>
+          {viewMode === "month" && <Text style={{ color: theme.colors.darkGray, fontSize: 11 }}>Visão mensal</Text>}
+        </View>
         <View style={styles.navRow}>
           <Pressable
-            accessibilityLabel="Semana anterior"
+            accessibilityLabel={viewMode === "month" ? "Mês anterior" : "Semana anterior"}
             accessibilityRole="button"
-            onPress={handlePrevWeek}
+            onPress={viewMode === "month" ? handlePrevMonth : handlePrevWeek}
             style={styles.navButton}
           >
             <Ionicons name="chevron-back" size={16} color={theme.colors.nearBlack} />
+          </Pressable>
+          <Pressable
+            accessibilityLabel="Ver mês"
+            accessibilityRole="button"
+            onPress={() => enableMonthView && setViewMode((current) => current === "week" ? "month" : "week")}
+            style={styles.todayButton}
+          >
+            <Text style={styles.todayText}>{viewMode === "month" ? "Semana" : "Mês"}</Text>
           </Pressable>
           <Pressable
             accessibilityLabel="Voltar para hoje"
@@ -90,9 +116,9 @@ export function WeekCalendarStrip({
             <Text style={styles.todayText}>Hoje</Text>
           </Pressable>
           <Pressable
-            accessibilityLabel="Próxima semana"
+            accessibilityLabel={viewMode === "month" ? "Próximo mês" : "Próxima semana"}
             accessibilityRole="button"
-            onPress={handleNextWeek}
+            onPress={viewMode === "month" ? handleNextMonth : handleNextWeek}
             style={styles.navButton}
           >
             <Ionicons name="chevron-forward" size={16} color={theme.colors.nearBlack} />
@@ -100,7 +126,7 @@ export function WeekCalendarStrip({
         </View>
       </View>
 
-      <View style={styles.daysRow}>
+      {viewMode === "week" || !enableMonthView ? <View style={styles.daysRow}>
         {weekDays.map((date) => {
           const dateStr = formatIsoDate(date);
           const isSelected = dateStr === selectedDate;
@@ -135,7 +161,26 @@ export function WeekCalendarStrip({
             </Pressable>
           );
         })}
-      </View>
+      </View> : <View style={{ flexDirection: "row", flexWrap: "wrap", padding: 6 }}>
+        {Array.from({ length: new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0).getDate() }, (_, index) => {
+          const date = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), index + 1);
+          const dateStr = formatIsoDate(date);
+          const count = visitCountsByDate[dateStr] ?? 0;
+          const isSelected = dateStr === selectedDate;
+          return (
+            <Pressable
+              key={dateStr}
+              accessibilityRole="button"
+              accessibilityLabel={`Dia ${date.getDate()}`}
+              onPress={() => onSelectDate(dateStr)}
+              style={{ alignItems: "center", borderRadius: 8, minWidth: "14.28%", paddingVertical: 8, backgroundColor: isSelected ? theme.colors.corporateBlue : "transparent" }}
+            >
+              <Text style={{ color: isSelected ? theme.colors.white : theme.colors.nearBlack, fontWeight: "600" }}>{date.getDate()}</Text>
+              {count > 0 && <Text style={{ color: isSelected ? theme.colors.white : theme.colors.corporateBlue, fontSize: 10 }}>{count}</Text>}
+            </Pressable>
+          );
+        })}
+      </View>}
     </View>
   );
 }

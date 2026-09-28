@@ -117,7 +117,7 @@ test("GET /visits without a token is rejected", async () => {
   assert.equal(response.statusCode, 401);
 });
 
-test("POST /visits requires the supervisor role", async () => {
+test("POST /visits allows an authenticated technician to create their own visit", async () => {
   const app = createApp();
   const login = await call(app, {
     method: "POST",
@@ -132,5 +132,6 @@ test("POST /visits requires the supervisor role", async () => {
     body: { id: "visit-new", clientId: "client-1" },
   });
 
-  assert.equal(response.statusCode, 403);
+  assert.equal(response.statusCode, 201);
+  assert.equal(response._getJSONData().employeeId, "employee-001");
 });

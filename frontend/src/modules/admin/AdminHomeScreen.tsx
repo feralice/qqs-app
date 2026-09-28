@@ -242,6 +242,7 @@ export function AdminHomeScreen({
         selectedDate={selectedDate}
         onSelectDate={setSelectedDate}
         visitCountsByDate={visitCountsByDate}
+        enableMonthView
       />
 
       {/* Lista de Visitas do Dia Selecionado */}

@@ -44,6 +44,7 @@ export type VisitDeparture = {
 export type VisitSummary = {
   id: VisitId;
   clientId: ClientId;
+  employeeId?: UserId;
   clientName: string;
   scheduledFor: string;
   status: VisitStatus;

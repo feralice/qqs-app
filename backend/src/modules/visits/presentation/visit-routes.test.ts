@@ -168,6 +168,24 @@ test("POST /visits allows supervisor to schedule a new visit", async () => {
   assert.equal(data.systemsCount, 2);
 });
 
+test("POST /visits allows a technician to create a visit assigned to themselves", async () => {
+  const response = await request({
+    method: "POST",
+    url: "/visits",
+    body: {
+      clientId: "client-technician",
+      clientName: "Cliente criado pelo técnico",
+      scheduledFor: "2026-09-24T11:00:00.000Z",
+      employeeId: "employee-002",
+      systems: [],
+    },
+  }, "employee");
+
+  assert.equal(response.statusCode, 201);
+  assert.equal(response._getJSONData().employeeId, "employee-001");
+  assert.equal(response._getJSONData().clientName, "Cliente criado pelo técnico");
+});
+
 test("POST /admin/visits/:id/reschedule allows supervisor to change the schedule idempotently", async () => {
   const app = createApp();
   const token = await login(app, "supervisor");

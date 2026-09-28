@@ -25,3 +25,21 @@ test("WeekCalendarStrip renders 7 days of the week and highlights the selected d
   assert.ok(json.includes("3"), "Deve exibir o badge com 3 visitas para o dia 22");
   assert.ok(json.includes("Hoje"), "Deve ter botão de atalho para voltar para hoje");
 });
+
+test("WeekCalendarStrip can switch to a monthly calendar", () => {
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(
+      React.createElement(WeekCalendarStrip, {
+        selectedDate: "2026-09-22",
+        onSelectDate: () => undefined,
+        enableMonthView: true,
+      }),
+    );
+  });
+
+  const monthButton = tree!.root.findByProps({ accessibilityLabel: "Ver mês" });
+  act(() => monthButton.props.onPress());
+  assert.match(JSON.stringify(tree!.toJSON()), /Visão mensal/);
+  assert.match(JSON.stringify(tree!.toJSON()), /30/);
+});
