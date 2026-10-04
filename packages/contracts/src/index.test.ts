@@ -71,11 +71,10 @@ test("visit contracts describe summaries, details, arrival, departure, photos an
     clientId: "client-001",
     employeeId: "emp-1",
     scheduledFor: "2026-09-23T09:00:00.000Z",
-    systems: [{ id: "sys-1", name: "Torre 1", type: "tower" }],
   };
 
   assert.equal(details.id, "visit-001");
   assert.equal(details.photos?.[0].caption, "Torre 1 tratada");
   assert.equal(finishRequest.operationId, "op-finish-1");
-  assert.equal(createRequest.systems[0].name, "Torre 1");
+  assert.equal(createRequest.clientId, "client-001");
 });
