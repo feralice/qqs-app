@@ -36,6 +36,7 @@ test("VisitDetailsScreen renders assigned visit with live map preview and arriva
       React.createElement(VisitDetailsScreen, {
         visit: sampleVisit,
         api: {
+          createVisit: async () => sampleVisit,
           startVisit: async () => sampleVisit,
           finishVisit: async () => sampleVisit,
         },
@@ -69,7 +70,7 @@ test("VisitDetailsScreen renders in-progress visit with timer, staff picker, rep
   };
 
   const store = new VisitStore();
-  store.set(inProgressVisit);
+  await store.set(inProgressVisit);
   const queue = new SyncQueue();
 
   let finishCalled = false;
@@ -82,6 +83,7 @@ test("VisitDetailsScreen renders in-progress visit with timer, staff picker, rep
         store,
         queue,
         api: {
+          createVisit: async () => sampleVisit,
           startVisit: async () => inProgressVisit,
           finishVisit: async (_id, req) => {
             finishCalled = true;
@@ -158,6 +160,7 @@ test("VisitDetailsScreen renders completed visit in read-only mode with duration
       React.createElement(VisitDetailsScreen, {
         visit: completedVisit,
         api: {
+          createVisit: async () => sampleVisit,
           startVisit: async () => completedVisit,
           finishVisit: async () => completedVisit,
         },
@@ -176,4 +179,151 @@ test("VisitDetailsScreen renders completed visit in read-only mode with duration
   assert.match(output, /João Silva/);
   assert.doesNotMatch(output, /Marcar Saída/);
   assert.doesNotMatch(output, /Confirmar Chegada \(OK\)/);
+});
+
+const visitWithClientLocation: VisitDetails = {
+  ...sampleVisit,
+  clientLocation: { latitude: -3.1019, longitude: -60.025, radiusMeters: 200 },
+};
+
+async function renderForArrival(location: { latitude: number; longitude: number } | undefined) {
+  const started: Array<{ justification?: string }> = [];
+  let tree: ReturnType<typeof create>;
+  await act(async () => {
+    tree = create(
+      React.createElement(VisitDetailsScreen, {
+        visit: visitWithClientLocation,
+        api: {
+          createVisit: async () => sampleVisit,
+          startVisit: async (_id, payload) => {
+            started.push(payload);
+            return { ...visitWithClientLocation, status: "in_progress" as const };
+          },
+          finishVisit: async () => visitWithClientLocation,
+        },
+        locationProvider: {
+          getArrivalLocation: async () =>
+            location ? { status: "granted" as const, location } : { status: "denied" as const },
+        },
+        availableEmployees: dummyEmployees,
+        store: new VisitStore(),
+        queue: new SyncQueue(),
+      }),
+    );
+  });
+  const pressArrival = async () => {
+    const button = tree!.root.findAll((node) => node.props.label === "Registrar chegada")[0];
+    await act(async () => button.props.onPress());
+  };
+  return { tree: tree!, started, pressArrival };
+}
+
+test("arrival inside the radius is sent without asking for a justification", async () => {
+  const { tree, started, pressArrival } = await renderForArrival({ latitude: -3.102, longitude: -60.0251 });
+  await pressArrival();
+
+  assert.equal(started.length, 1);
+  assert.equal(started[0].justification, undefined);
+  assert.doesNotMatch(JSON.stringify(tree.toJSON()), /Justificativa/);
+});
+
+test("arrival outside the radius asks for a justification before sending", async () => {
+  const { tree, started, pressArrival } = await renderForArrival({ latitude: -3.119, longitude: -60.021 });
+  await pressArrival();
+
+  assert.equal(started.length, 0);
+  assert.match(JSON.stringify(tree.toJSON()), /Você está a 1953 m da empresa \(raio de 200 m\)/);
+
+  const confirm = tree.root.findByProps({ accessibilityLabel: "Confirmar chegada com justificativa" });
+  assert.equal(confirm.props.disabled, true);
+
+  await act(async () =>
+    tree.root.findByProps({ accessibilityLabel: "Justificativa da chegada" }).props.onChangeText("Portaria afastada"),
+  );
+  await act(async () =>
+    tree.root.findByProps({ accessibilityLabel: "Confirmar chegada com justificativa" }).props.onPress(),
+  );
+
+  assert.equal(started.length, 1);
+  assert.equal(started[0].justification, "Portaria afastada");
+});
+
+test("arrival without GPS explains that the location is unavailable", async () => {
+  const { tree, started, pressArrival } = await renderForArrival(undefined);
+  await pressArrival();
+
+  assert.equal(started.length, 0);
+  assert.match(JSON.stringify(tree.toJSON()), /Localização indisponível/);
+});
+
+test("cancelling the justification keeps the visit waiting for arrival", async () => {
+  const { tree, started, pressArrival } = await renderForArrival({ latitude: -3.119, longitude: -60.021 });
+  await pressArrival();
+  await act(async () => tree.root.findByProps({ accessibilityLabel: "Cancelar justificativa" }).props.onPress());
+
+  assert.equal(started.length, 0);
+  assert.doesNotMatch(JSON.stringify(tree.toJSON()), /Justificativa da chegada/);
+  assert.match(JSON.stringify(tree.toJSON()), /Aguardando chegada/);
+});
+
+test("offline staff list never shows made-up employees", async () => {
+  let tree: ReturnType<typeof create>;
+  await act(async () => {
+    tree = create(
+      React.createElement(VisitDetailsScreen, {
+        visit: { ...sampleVisit, status: "in_progress" as const, arrival: { arrivedAt: "2026-09-22T13:05:00.000Z" } },
+        api: {
+          createVisit: async () => sampleVisit,
+          startVisit: async () => sampleVisit,
+          finishVisit: async () => sampleVisit,
+          listEmployees: async () => {
+            throw new Error("offline");
+          },
+        },
+        locationProvider: { getArrivalLocation: async () => ({ status: "denied" as const }) },
+        store: new VisitStore(),
+        queue: new SyncQueue(),
+      }),
+    );
+  });
+
+  const output = JSON.stringify(tree!.toJSON());
+  assert.doesNotMatch(output, /Carlos Silva|Marcos Lima|Técnico Responsável/);
+});
+
+test("tapping arrival twice records a single check-in", async () => {
+  const started: unknown[] = [];
+  let calls = 0;
+  let tree: ReturnType<typeof create>;
+  await act(async () => {
+    tree = create(
+      React.createElement(VisitDetailsScreen, {
+        visit: visitWithClientLocation,
+        api: {
+          createVisit: async () => visitWithClientLocation,
+          startVisit: async (_id, payload) => {
+            started.push(payload);
+            return visitWithClientLocation;
+          },
+          finishVisit: async () => visitWithClientLocation,
+        },
+        locationProvider: {
+          getArrivalLocation: async () => {
+            calls++;
+            await new Promise((resolve) => setTimeout(resolve, calls * 15));
+            return { status: "granted" as const, location: { latitude: -3.102, longitude: -60.0251 } };
+          },
+        },
+        availableEmployees: dummyEmployees,
+        store: new VisitStore(),
+        queue: new SyncQueue(),
+      }),
+    );
+  });
+  const button = tree!.root.findAll((node) => node.props.label === "Registrar chegada")[0];
+  await act(async () => {
+    await Promise.all([button.props.onPress(), button.props.onPress()]);
+  });
+
+  assert.equal(started.length, 1);
 });

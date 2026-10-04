@@ -92,3 +92,67 @@ test("VisitsScreen lets a technician open the create visit form", () => {
   act(() => button.props.onPress());
   assert.match(JSON.stringify(tree!.toJSON()), /Salvar visita do técnico/);
 });
+
+test("VisitsScreen shows visits that arrive after the first render", () => {
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(React.createElement(VisitsScreen, { initialDate: "2026-09-22", visits: [], onOpen: () => {} }));
+  });
+  act(() => {
+    tree!.update(React.createElement(VisitsScreen, { initialDate: "2026-09-22", visits: mockVisits, onOpen: () => {} }));
+  });
+
+  assert.match(JSON.stringify(tree!.toJSON()), /Coca-Cola FEMSA/);
+});
+
+test("VisitsScreen shows pending sync count and lets the technician retry", () => {
+  let synced = 0;
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(React.createElement(VisitsScreen, {
+      visits: mockVisits,
+      onOpen: () => {},
+      pendingSyncCount: 2,
+      onSync: () => {
+        synced++;
+      },
+    }));
+  });
+
+  assert.match(JSON.stringify(tree!.toJSON()), /2 registros aguardando envio/);
+  act(() => tree!.root.findByProps({ accessibilityLabel: "Sincronizar agora" }).props.onPress());
+  assert.equal(synced, 1);
+});
+
+test("VisitsScreen hides the sync banner when nothing is pending", () => {
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(React.createElement(VisitsScreen, { visits: mockVisits, onOpen: () => {}, pendingSyncCount: 0 }));
+  });
+
+  assert.doesNotMatch(JSON.stringify(tree!.toJSON()), /aguardando envio/);
+});
+
+test("VisitsScreen marks a visit whose check-in was outside the radius", () => {
+  const flagged = {
+    ...mockVisits[0],
+    status: "in_progress" as const,
+    arrival: { arrivedAt: "2026-09-21T13:05:00.000Z", outsideRadius: true, justification: "Portaria afastada" },
+  };
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(React.createElement(VisitsScreen, { initialDate: "2026-09-21", visits: [flagged, mockVisits[1]], onOpen: () => {} }));
+  });
+
+  const output = JSON.stringify(tree!.toJSON());
+  assert.equal(output.match(/Fora do raio/g)?.length, 1);
+});
+
+test("VisitsScreen warns about records the server refused", () => {
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(React.createElement(VisitsScreen, { visits: mockVisits, onOpen: () => {}, rejectedSyncCount: 1 }));
+  });
+
+  assert.match(JSON.stringify(tree!.toJSON()), /1 registro recusado pelo servidor/);
+});

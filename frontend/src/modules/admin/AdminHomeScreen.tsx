@@ -1,61 +1,21 @@
 import React, { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { AdminDashboardSummary as DashboardSummary, EmployeeSummary, VisitDetails } from "@qqs/contracts";
+import type {
+  AdminDashboardSummary as DashboardSummary,
+  ClientSummary,
+  EmployeeSummary,
+  VisitDetails,
+} from "@qqs/contracts";
 
 import { useOptionalAuth } from "../auth/AuthContext";
 import { StatCard } from "../../shared/ui/components/StatCard";
 import { Badge } from "../../shared/ui/components/Badge";
 import { WeekCalendarStrip } from "../../shared/ui/components/WeekCalendarStrip";
-import { AdminScheduleModal } from "./AdminScheduleModal";
+import { AdminScheduleModal, type AdminScheduleDraft } from "./AdminScheduleModal";
 import { theme } from "../../shared/ui/theme";
 import { styles } from "./AdminHomeScreen.styles";
 import { AdminDashboardSummary } from "./AdminDashboardSummary";
-
-const DEFAULT_VISITS: VisitDetails[] = [
-  {
-    id: "visit-001",
-    clientId: "client-001",
-    clientName: "Gases da Amazônia",
-    clientAddress: "Av. Danilo de Mattos Areosa, 1000",
-    scheduledFor: "2026-09-22T09:00:00.000Z",
-    status: "in_progress",
-    systemsCount: 2,
-    systems: [
-      { id: "sys-1", name: "Torre 1", type: "tower" },
-      { id: "sys-2", name: "Caldeira", type: "boiler" },
-    ],
-    syncStatus: "synced",
-  },
-  {
-    id: "visit-002",
-    clientId: "client-002",
-    clientName: "Coca-Cola FEMSA",
-    clientAddress: "Av. Tefé, 2500",
-    scheduledFor: "2026-09-22T14:00:00.000Z",
-    status: "assigned",
-    systemsCount: 1,
-    systems: [{ id: "sys-3", name: "Chiller Central", type: "chiller" }],
-    syncStatus: "synced",
-  },
-  {
-    id: "visit-003",
-    clientId: "client-003",
-    clientName: "Ambev Manaus",
-    clientAddress: "Rua Javari, 800",
-    scheduledFor: "2026-09-23T10:00:00.000Z",
-    status: "assigned",
-    systemsCount: 3,
-    systems: [{ id: "sys-4", name: "Osmose Reversa", type: "ro" }],
-    syncStatus: "synced",
-  },
-];
-
-const DEFAULT_EMPLOYEES: EmployeeSummary[] = [
-  { id: "employee-001", name: "Carlos Silva", email: "carlos@qqs.com", role: "employee" },
-  { id: "emp-2", name: "Marcos Lima", email: "marcos@qqs.com", role: "employee" },
-  { id: "emp-3", name: "João Pereira", email: "joao@qqs.com", role: "employee" },
-];
 
 const adminModules = [
   {
@@ -92,30 +52,27 @@ export type AdminHomeScreenProps = {
   userName?: string;
   visits?: VisitDetails[];
   employees?: EmployeeSummary[];
-  onScheduleVisit?: (data: {
-    clientName: string;
-    clientAddress?: string;
-    employeeId: string;
-    scheduledFor: string;
-    systems: Array<{ name: string; type: string }>;
-  }) => Promise<void> | void;
+  clients?: ClientSummary[];
+  onScheduleVisit?: (data: AdminScheduleDraft) => Promise<void> | void;
   onOpenVisit?: (visitId: string) => void;
+  onOpenClients?: () => void;
   initialDate?: string;
   dashboardSummary?: DashboardSummary;
 };
 
 export function AdminHomeScreen({
   userName,
-  visits = DEFAULT_VISITS,
-  employees = DEFAULT_EMPLOYEES,
+  visits: allVisits = [],
+  employees = [],
+  clients = [],
   onScheduleVisit,
   onOpenVisit,
+  onOpenClients,
   initialDate,
   dashboardSummary,
 }: AdminHomeScreenProps) {
   const auth = useOptionalAuth();
   const displayName = userName ?? auth?.user?.name ?? "Administrador";
-  const [allVisits, setAllVisits] = useState<VisitDetails[]>(visits);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -123,10 +80,10 @@ export function AdminHomeScreen({
 
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     if (initialDate) return initialDate;
-    if (visits.some((v) => v.scheduledFor?.startsWith(todayStr))) {
+    if (allVisits.some((v) => v.scheduledFor?.startsWith(todayStr))) {
       return todayStr;
     }
-    const firstScheduled = visits.find((v) => v.scheduledFor)?.scheduledFor;
+    const firstScheduled = allVisits.find((v) => v.scheduledFor)?.scheduledFor;
     return firstScheduled ? firstScheduled.substring(0, 10) : todayStr;
   });
 
@@ -181,30 +138,10 @@ export function AdminHomeScreen({
     };
   }, [allVisits, employees, selectedDate]);
 
-  async function handleScheduleVisit(data: {
-    clientName: string;
-    clientAddress?: string;
-    employeeId: string;
-    scheduledFor: string;
-    systems: Array<{ name: string; type: string }>;
-  }) {
+  async function handleScheduleVisit(data: AdminScheduleDraft) {
     setIsSaving(true);
     try {
-      const newVisit: VisitDetails = {
-        id: `visit-${Date.now()}`,
-        clientId: `client-${Date.now()}`,
-        clientName: data.clientName,
-        clientAddress: data.clientAddress,
-        scheduledFor: data.scheduledFor,
-        status: "assigned",
-        systemsCount: data.systems.length,
-        systems: data.systems.map((s, idx) => ({ id: `sys-${idx}`, name: s.name, type: s.type })),
-        syncStatus: "synced",
-      };
-      setAllVisits((prev) => [newVisit, ...prev]);
-      if (onScheduleVisit) {
-        await onScheduleVisit(data);
-      }
+      await onScheduleVisit?.(data);
     } finally {
       setIsSaving(false);
     }
@@ -229,6 +166,16 @@ export function AdminHomeScreen({
       >
         <Ionicons name="add-circle" size={20} color={theme.colors.white} />
         <Text style={styles.scheduleButtonText}>+ Agendar Nova Visita</Text>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Gerenciar empresas"
+        onPress={onOpenClients}
+        style={[styles.scheduleButton, { backgroundColor: theme.colors.aqua }]}
+      >
+        <Ionicons name="business" size={20} color={theme.colors.white} />
+        <Text style={styles.scheduleButtonText}>Empresas</Text>
       </Pressable>
 
       <AdminDashboardSummary
@@ -362,6 +309,7 @@ export function AdminHomeScreen({
         onClose={() => setIsModalOpen(false)}
         onSave={handleScheduleVisit}
         employees={employees}
+        clients={clients}
         loading={isSaving}
       />
     </ScrollView>

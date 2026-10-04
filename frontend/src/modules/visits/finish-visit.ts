@@ -8,7 +8,7 @@ import type {
 
 import type { LocationProvider } from "../location/location-provider";
 import type { SyncQueue } from "../sync/sync-queue";
-import type { VisitApi } from "./visit-api";
+import { syncPending, type SyncApi } from "../sync/sync-runner";
 import { VisitStore } from "./visit-store";
 
 export type FinishVisitInput = {
@@ -19,7 +19,7 @@ export type FinishVisitInput = {
   locationProvider: LocationProvider;
   queue: SyncQueue;
   store: VisitStore;
-  api: Pick<VisitApi, "finishVisit">;
+  api: SyncApi;
   description?: string;
   attendants?: EmployeeSummary[];
   photos?: VisitPhoto[];
@@ -67,9 +67,9 @@ export async function finishVisit(input: FinishVisitInput): Promise<{
     syncStatus: "pending",
   };
 
-  input.store.set(localUpdated);
+  await input.store.set(localUpdated);
 
-  input.queue.enqueue({
+  await input.queue.enqueue({
     operationId,
     entityId: input.visitId,
     type: "visit.finish",
@@ -83,34 +83,12 @@ export async function finishVisit(input: FinishVisitInput): Promise<{
     },
   });
 
-  try {
-    const remote = await input.api.finishVisit(input.visitId, {
-      operationId,
-      finishedAt: input.now,
-      location,
-      description: input.description,
-      attendants: input.attendants,
-      attendantIds: input.attendants?.map((a) => a.id),
-      photos: input.photos,
-    });
-    input.queue.confirm(operationId);
-    const syncedVisit: VisitDetails = {
-      ...localUpdated,
-      ...remote,
-      status: "completed",
-      syncStatus: "synced",
-    };
-    input.store.set(syncedVisit);
-    return {
-      locationStatus: locationResult.status,
-      syncStatus: "synced",
-      visit: syncedVisit,
-    };
-  } catch {
-    return {
-      locationStatus: locationResult.status,
-      syncStatus: "pending",
-      visit: localUpdated,
-    };
+  // Envia pela fila: um check-in ainda pendente precisa chegar antes do check-out.
+  await syncPending(input.queue, input.api).catch(() => undefined);
+  if (input.queue.get(operationId)?.status !== "synced") {
+    return { locationStatus: locationResult.status, syncStatus: "pending", visit: localUpdated };
   }
+  const syncedVisit: VisitDetails = { ...localUpdated, syncStatus: "synced" };
+  await input.store.set(syncedVisit);
+  return { locationStatus: locationResult.status, syncStatus: "synced", visit: syncedVisit };
 }

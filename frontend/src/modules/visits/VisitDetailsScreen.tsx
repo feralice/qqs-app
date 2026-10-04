@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import type { EmployeeSummary, VisitDetails, VisitPhoto } from "@qqs/contracts";
 
 import type { LocationProvider } from "../location/location-provider";
 import { startVisit } from "./start-visit";
+import { evaluateArrival, type ArrivalEvaluation } from "./arrival";
+import { ArrivalJustification } from "./ArrivalJustification";
 import { finishVisit } from "./finish-visit";
 import type { VisitApi } from "./visit-api";
+import type { SyncApi } from "../sync/sync-runner";
 import { SyncQueue } from "../sync/sync-queue";
 import { VisitStore } from "./visit-store";
 import { LocationMap } from "../../shared/ui/components/LocationMap";
@@ -16,15 +19,9 @@ import { PhotoEvidencePicker } from "../../shared/ui/components/PhotoEvidencePic
 import { Button } from "../../shared/ui/components/Button";
 import { styles } from "./VisitDetailsScreen.styles";
 
-const DEFAULT_EMPLOYEES: EmployeeSummary[] = [
-  { id: "employee-001", name: "Técnico Responsável", email: "tecnico@qqs.com", role: "employee" },
-  { id: "emp-2", name: "Carlos Silva", email: "carlos@qqs.com", role: "employee" },
-  { id: "emp-3", name: "Marcos Lima", email: "marcos@qqs.com", role: "employee" },
-];
-
 export type VisitDetailsScreenProps = {
   visit: VisitDetails;
-  api: Pick<VisitApi, "startVisit" | "finishVisit"> & Partial<Pick<VisitApi, "listEmployees">>;
+  api: SyncApi & Partial<Pick<VisitApi, "listEmployees">>;
   locationProvider: LocationProvider;
   employeeId?: string;
   queue?: SyncQueue;
@@ -44,6 +41,9 @@ export function VisitDetailsScreen({
   const [current, setCurrent] = useState(visit);
   const [message, setMessage] = useState<string>();
   const [loading, setLoading] = useState(false);
+  const [pendingArrival, setPendingArrival] = useState<ArrivalEvaluation>();
+  // Estado do React só muda no próximo render; a trava precisa valer já no segundo toque.
+  const busy = useRef(false);
 
   // States for service execution
   const [description, setDescription] = useState(visit.description ?? "");
@@ -52,7 +52,7 @@ export function VisitDetailsScreen({
   );
   const [photos, setPhotos] = useState<VisitPhoto[]>(() => visit.photos ?? []);
   const [employees, setEmployees] = useState<EmployeeSummary[]>(
-    () => availableEmployees ?? DEFAULT_EMPLOYEES,
+    () => availableEmployees ?? [],
   );
   const [liveLocation, setLiveLocation] = useState<{ latitude: number; longitude: number }>({
     latitude: -3.10194,
@@ -87,27 +87,44 @@ export function VisitDetailsScreen({
   }, [current.status, locationProvider]);
 
   async function handleStart() {
+    if (busy.current) return;
+    busy.current = true;
     setLoading(true);
-    store.set(current);
+    const arrival = await evaluateArrival(locationProvider, current.clientLocation);
+    busy.current = false;
+    if (arrival.outsideRadius) {
+      setPendingArrival(arrival);
+      setLoading(false);
+      return;
+    }
+    await confirmArrival(arrival);
+  }
+
+  async function confirmArrival(arrival: ArrivalEvaluation, justification?: string) {
+    if (busy.current) return;
+    busy.current = true;
+    setLoading(true);
+    await store.set(current);
     const result = await startVisit({
       visitId: current.id,
-      clientId: current.clientId,
-      employeeId,
       now: new Date().toISOString(),
-      locationProvider,
+      arrival,
+      justification,
       queue,
       store,
       api,
     });
+    setPendingArrival(undefined);
     setCurrent(store.get(current.id) ?? current);
     setMessage(
       result.syncStatus === "synced"
-        ? result.locationStatus === "granted"
+        ? arrival.location
           ? "Chegada confirmada com sucesso via GPS no mapa!"
           : "Chegada registrada sem localização GPS."
         : "Chegada salva no aparelho; será sincronizada assim que houver rede.",
     );
     setLoading(false);
+    busy.current = false;
   }
 
   async function handleFinish() {
@@ -212,6 +229,22 @@ export function VisitDetailsScreen({
         />
       )}
 
+      {pendingArrival && (
+        <ArrivalJustification
+          distanceMeters={pendingArrival.distanceMeters}
+          radiusMeters={current.clientLocation?.radiusMeters}
+          loading={loading}
+          onConfirm={(justification) => confirmArrival(pendingArrival, justification)}
+          onCancel={() => setPendingArrival(undefined)}
+        />
+      )}
+
+      {current.arrival?.outsideRadius && (
+        <Text style={styles.message}>
+          Chegada fora do raio{current.arrival.justification ? `: ${current.arrival.justification}` : ""}
+        </Text>
+      )}
+
       {/* Sistemas vistoriados */}
       <Text style={styles.section}>Sistemas para vistoria</Text>
       <View style={styles.systemsCard}>
@@ -251,7 +284,7 @@ export function VisitDetailsScreen({
       />
 
       {/* Ações de início ou encerramento */}
-      {isAssigned && (
+      {isAssigned && !pendingArrival && (
         <Button
           label="Registrar chegada"
           loading={loading}

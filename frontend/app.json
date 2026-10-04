@@ -13,7 +13,8 @@
           "locationAlwaysAndWhenInUsePermission": "Permita que o QQS registre o local da chegada."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true

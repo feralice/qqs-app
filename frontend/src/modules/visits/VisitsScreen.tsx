@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import type { VisitDetails } from "@qqs/contracts";
+import type { ClientSummary, VisitDetails } from "@qqs/contracts";
 
 import { VisitCard } from "./VisitCard";
 import { WeekCalendarStrip } from "../../shared/ui/components/WeekCalendarStrip";
@@ -14,16 +14,23 @@ export type VisitsScreenProps = {
   visits: VisitDetails[];
   onOpen: (visitId: string) => void;
   initialDate?: string;
+  clients?: ClientSummary[];
   onCreateVisit?: (draft: TechnicianVisitDraft) => Promise<void> | void;
+  pendingSyncCount?: number;
+  rejectedSyncCount?: number;
+  onSync?: () => void;
 };
 
 export function VisitsScreen({
-  visits,
+  visits: allVisits,
   onOpen,
   initialDate,
+  clients = [],
   onCreateVisit,
+  pendingSyncCount = 0,
+  rejectedSyncCount = 0,
+  onSync,
 }: VisitsScreenProps) {
-  const [allVisits, setAllVisits] = useState(visits);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const todayStr = useMemo(() => new Date().toISOString().substring(0, 10), []);
 
@@ -54,22 +61,6 @@ export function VisitsScreen({
     return allVisits.filter((v) => v.scheduledFor?.startsWith(selectedDate));
   }, [allVisits, selectedDate, filterByDate]);
 
-  async function handleCreateVisit(draft: TechnicianVisitDraft) {
-    const newVisit: VisitDetails = {
-      id: `visit-local-${Date.now()}`,
-      clientId: `client-local-${Date.now()}`,
-      clientName: draft.clientName,
-      clientAddress: draft.clientAddress,
-      scheduledFor: draft.scheduledFor,
-      status: "assigned",
-      systemsCount: draft.systems.length,
-      systems: draft.systems.map((system, index) => ({ ...system, id: `system-local-${index}` })),
-      syncStatus: "pending",
-    };
-    setAllVisits((current) => [newVisit, ...current]);
-    await onCreateVisit?.(draft);
-  }
-
   function handleSelectDate(date: string) {
     setSelectedDate(date);
     setFilterByDate(true);
@@ -87,6 +78,39 @@ export function VisitsScreen({
           <Text style={styles.countText}>{displayedVisits.length}</Text>
         </View>
       </View>
+
+      {pendingSyncCount > 0 && (
+        <View
+          style={{
+            alignItems: "center",
+            backgroundColor: theme.colors.lightBlue,
+            borderRadius: 10,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 10,
+            padding: 12,
+          }}
+        >
+          <Text style={{ color: theme.colors.darkGray, flex: 1 }}>
+            {pendingSyncCount === 1 ? "1 registro aguardando envio" : `${pendingSyncCount} registros aguardando envio`}
+          </Text>
+          {onSync && (
+            <Pressable accessibilityRole="button" accessibilityLabel="Sincronizar agora" onPress={onSync}>
+              <Text style={{ color: theme.colors.corporateBlue, fontWeight: "700" }}>Sincronizar</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
+
+      {rejectedSyncCount > 0 && (
+        <View style={{ backgroundColor: theme.colors.nearBlack, borderRadius: 10, marginBottom: 10, padding: 12 }}>
+          <Text style={{ color: theme.colors.white }}>
+            {rejectedSyncCount === 1
+              ? "1 registro recusado pelo servidor. Procure o gestor para conferir a visita."
+              : `${rejectedSyncCount} registros recusados pelo servidor. Procure o gestor para conferir as visitas.`}
+          </Text>
+        </View>
+      )}
 
       <Pressable
         accessibilityRole="button"
@@ -159,8 +183,11 @@ export function VisitsScreen({
       />
       <TechnicianCreateVisitModal
         visible={createModalOpen}
+        clients={clients}
         onClose={() => setCreateModalOpen(false)}
-        onSave={handleCreateVisit}
+        onSave={async (draft) => {
+          await onCreateVisit?.(draft);
+        }}
       />
     </View>
   );

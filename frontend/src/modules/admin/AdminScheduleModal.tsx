@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -9,66 +9,74 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { EmployeeSummary } from "@qqs/contracts";
+import type { ClientSummary, EmployeeSummary } from "@qqs/contracts";
 
+import { ClientPicker } from "../clients/ClientPicker";
 import { theme } from "../../shared/ui/theme";
 import { styles } from "./AdminScheduleModal.styles";
+
+export type AdminScheduleDraft = {
+  client: ClientSummary;
+  employeeId: string;
+  scheduledFor: string;
+};
 
 export type AdminScheduleModalProps = {
   visible: boolean;
   onClose: () => void;
-  onSave: (data: {
-    clientName: string;
-    clientAddress?: string;
-    employeeId: string;
-    scheduledFor: string;
-    systems: Array<{ name: string; type: string }>;
-  }) => Promise<void> | void;
+  onSave: (data: AdminScheduleDraft) => Promise<void> | void;
   employees: EmployeeSummary[];
+  clients: ClientSummary[];
   loading?: boolean;
 };
+
+// Data e hora digitadas são do fuso do aparelho (Manaus, UTC-4), não UTC.
+export function toScheduledFor(date: string, time: string): string | undefined {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(time);
+  if (!dateMatch || !timeMatch) return undefined;
+  const [year, month, day] = dateMatch.slice(1).map(Number);
+  const [hours, minutes] = timeMatch.slice(1).map(Number);
+  const local = new Date(year, month - 1, day, hours, minutes);
+  const sameFields =
+    local.getFullYear() === year &&
+    local.getMonth() === month - 1 &&
+    local.getDate() === day &&
+    local.getHours() === hours &&
+    local.getMinutes() === minutes;
+  return sameFields ? local.toISOString() : undefined;
+}
+
+function localDateString(now = new Date()): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
 
 export function AdminScheduleModal({
   visible,
   onClose,
   onSave,
   employees,
+  clients,
   loading = false,
 }: AdminScheduleModalProps) {
-  const [clientName, setClientName] = useState("");
-  const [clientAddress, setClientAddress] = useState("");
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>(
-    () => employees[0]?.id ?? "employee-001",
-  );
-  const [date, setDate] = useState(() => new Date().toISOString().substring(0, 10));
+  const [client, setClient] = useState<ClientSummary>();
+  const [dateError, setDateError] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | undefined>(employees[0]?.id);
+  const [date, setDate] = useState(localDateString);
+
+  useEffect(() => {
+    if (!employees.some((employee) => employee.id === selectedEmployeeId)) {
+      setSelectedEmployeeId(employees[0]?.id);
+    }
+  }, [employees, selectedEmployeeId]);
   const [time, setTime] = useState("09:00");
-  const [newSystemName, setNewSystemName] = useState("");
-  const [systems, setSystems] = useState<Array<{ name: string; type: string }>>([
-    { name: "Torre de Resfriamento 1", type: "tower" },
-  ]);
-
-  function handleAddSystem() {
-    if (!newSystemName.trim()) return;
-    setSystems((prev) => [...prev, { name: newSystemName.trim(), type: "equipment" }]);
-    setNewSystemName("");
-  }
-
-  function handleRemoveSystem(index: number) {
-    setSystems((prev) => prev.filter((_, i) => i !== index));
-  }
-
   async function handleSubmit() {
-    if (!clientName.trim()) return;
-    const scheduledFor = `${date}T${time}:00.000Z`;
-    await onSave({
-      clientName: clientName.trim(),
-      clientAddress: clientAddress.trim() || undefined,
-      employeeId: selectedEmployeeId,
-      scheduledFor,
-      systems,
-    });
-    setClientName("");
-    setClientAddress("");
+    const scheduledFor = toScheduledFor(date, time);
+    setDateError(!scheduledFor);
+    if (!client || !scheduledFor || !selectedEmployeeId) return;
+    await onSave({ client, employeeId: selectedEmployeeId, scheduledFor });
+    setClient(undefined);
     onClose();
   }
 
@@ -97,29 +105,16 @@ export function AdminScheduleModal({
           </View>
 
           <Text style={styles.subtitle}>
-            Preencha os dados do cliente e selecione o técnico responsável:
+            Escolha a empresa cadastrada e o técnico responsável:
           </Text>
 
           <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
             <Text style={styles.label}>Empresa / Cliente *</Text>
-            <TextInput
-              accessibilityLabel="Nome da empresa"
-              onChangeText={setClientName}
-              placeholder="Ex.: Gases da Amazônia"
-              placeholderTextColor="#94A3B8"
-              style={styles.input}
-              value={clientName}
-            />
-
-            <Text style={styles.label}>Endereço do Local</Text>
-            <TextInput
-              accessibilityLabel="Endereço do local"
-              onChangeText={setClientAddress}
-              placeholder="Ex.: Av. Danilo de Mattos Areosa, 1000"
-              placeholderTextColor="#94A3B8"
-              style={styles.input}
-              value={clientAddress}
-            />
+            {clients.length === 0 ? (
+              <Text style={styles.subtitle}>Cadastre uma empresa antes de agendar.</Text>
+            ) : (
+              <ClientPicker clients={clients} selectedId={client?.id} onSelect={setClient} />
+            )}
 
             <Text style={styles.label}>Técnico Responsável *</Text>
             <View style={styles.employeeChips}>
@@ -172,41 +167,7 @@ export function AdminScheduleModal({
               </View>
             </View>
 
-            <Text style={styles.label}>Sistemas para Vistoria ({systems.length})</Text>
-            <View style={styles.systemAddRow}>
-              <TextInput
-                accessibilityLabel="Nome do sistema a vistoriar"
-                onChangeText={setNewSystemName}
-                placeholder="Ex.: Caldeira 2, Chiller..."
-                placeholderTextColor="#94A3B8"
-                style={styles.systemAddInput}
-                value={newSystemName}
-              />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Adicionar sistema"
-                onPress={handleAddSystem}
-                style={styles.addSystemButton}
-              >
-                <Text style={styles.addSystemButtonText}>+ Adicionar</Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.systemsList}>
-              {systems.map((s, idx) => (
-                <View key={`${s.name}-${idx}`} style={styles.systemItem}>
-                  <Ionicons name="hardware-chip-outline" size={13} color={theme.colors.corporateBlue} />
-                  <Text style={styles.systemItemText}>{s.name}</Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remover ${s.name}`}
-                    onPress={() => handleRemoveSystem(idx)}
-                  >
-                    <Ionicons name="close-circle" size={15} color="#EF4444" />
-                  </Pressable>
-                </View>
-              ))}
-            </View>
+            {dateError && <Text style={styles.subtitle}>Data ou horário inválidos.</Text>}
 
             <View style={styles.actionRow}>
               <Pressable
@@ -222,11 +183,11 @@ export function AdminScheduleModal({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Salvar agendamento"
-                disabled={loading || !clientName.trim()}
+                disabled={loading || !client || !selectedEmployeeId}
                 onPress={handleSubmit}
                 style={[
                   styles.saveButton,
-                  (!clientName.trim() || loading) && styles.saveButtonDisabled,
+                  (!client || loading) && styles.saveButtonDisabled,
                 ]}
               >
                 {loading ? (

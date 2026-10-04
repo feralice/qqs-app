@@ -6,7 +6,8 @@ import { create, act } from "react-test-renderer";
 import type { EmployeeSummary, VisitDetails } from "@qqs/contracts";
 
 import { AdminHomeScreen } from "./AdminHomeScreen";
-import { AdminScheduleModal } from "./AdminScheduleModal";
+import { AdminScheduleModal, type AdminScheduleDraft } from "./AdminScheduleModal";
+import { sampleClients } from "../clients/client-fixtures";
 
 const testEmployees: EmployeeSummary[] = [
   { id: "emp-1", name: "Carlos Silva", email: "carlos@qqs.com", role: "employee" },
@@ -51,8 +52,8 @@ test("AdminHomeScreen renders supervisor dashboard, calendar strip, metrics and 
   assert.match(output, /Módulos do Sistema/);
 });
 
-test("AdminScheduleModal allows supervisor to fill and confirm a new visit schedule", async () => {
-  let savedData: unknown;
+test("AdminScheduleModal schedules a registered company for the chosen technician", async () => {
+  let savedData: AdminScheduleDraft | undefined;
   let closed = false;
 
   let tree: ReturnType<typeof create>;
@@ -61,6 +62,7 @@ test("AdminScheduleModal allows supervisor to fill and confirm a new visit sched
       React.createElement(AdminScheduleModal, {
         visible: true,
         employees: testEmployees,
+        clients: sampleClients,
         onClose: () => {
           closed = true;
         },
@@ -76,19 +78,97 @@ test("AdminScheduleModal allows supervisor to fill and confirm a new visit sched
   assert.match(output, /Carlos Silva/);
   assert.match(output, /Marcos Lima/);
 
-  // Fill client name
-  const nameInput = tree!.root.findByProps({ accessibilityLabel: "Nome da empresa" });
-  await act(async () => {
-    nameInput.props.onChangeText("Ambev Manaus");
-  });
+  const confirmButton = () => tree!.root.findByProps({ accessibilityLabel: "Salvar agendamento" });
+  assert.equal(confirmButton().props.disabled, true);
 
-  // Confirm schedule
-  const confirmButton = tree!.root.findByProps({ accessibilityLabel: "Salvar agendamento" });
-  await act(async () => {
-    confirmButton.props.onPress();
-  });
+  await act(async () => tree!.root.findByProps({ accessibilityLabel: "Escolher Ambev Manaus" }).props.onPress());
+  await act(async () => tree!.root.findByProps({ accessibilityLabel: "Selecionar técnico Marcos Lima" }).props.onPress());
+  await act(async () => tree!.root.findByProps({ accessibilityLabel: "Data do agendamento" }).props.onChangeText("2026-10-05"));
+  await act(async () => tree!.root.findByProps({ accessibilityLabel: "Horário do agendamento" }).props.onChangeText("14:30"));
+  await act(async () => confirmButton().props.onPress());
 
-  assert.ok(savedData);
-  assert.equal((savedData as { clientName: string }).clientName, "Ambev Manaus");
+  assert.equal(savedData?.client.id, "client-002");
+  assert.equal(savedData?.employeeId, "emp-2");
+  assert.equal(savedData?.scheduledFor, new Date(2026, 9, 5, 14, 30).toISOString());
   assert.equal(closed, true);
+});
+
+test("AdminScheduleModal rejects an invalid date", async () => {
+  let saved = false;
+  let tree: ReturnType<typeof create>;
+  await act(async () => {
+    tree = create(
+      React.createElement(AdminScheduleModal, {
+        visible: true,
+        employees: testEmployees,
+        clients: sampleClients,
+        onClose: () => undefined,
+        onSave: () => {
+          saved = true;
+        },
+      }),
+    );
+  });
+  await act(async () => tree!.root.findByProps({ accessibilityLabel: "Escolher Ambev Manaus" }).props.onPress());
+  await act(async () => tree!.root.findByProps({ accessibilityLabel: "Data do agendamento" }).props.onChangeText("31/02"));
+  await act(async () => tree!.root.findByProps({ accessibilityLabel: "Salvar agendamento" }).props.onPress());
+
+  assert.equal(saved, false);
+  assert.match(JSON.stringify(tree!.toJSON()), /Data ou horário inválidos/);
+});
+
+test("AdminHomeScreen opens the companies screen", () => {
+  let opened = 0;
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(
+      React.createElement(AdminHomeScreen, {
+        initialDate: "2026-09-22",
+        visits: testVisits,
+        employees: testEmployees,
+        onOpenClients: () => {
+          opened++;
+        },
+      }),
+    );
+  });
+
+  act(() => tree!.root.findByProps({ accessibilityLabel: "Gerenciar empresas" }).props.onPress());
+  assert.equal(opened, 1);
+});
+
+test("AdminHomeScreen shows visits loaded after the first render", () => {
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(React.createElement(AdminHomeScreen, { initialDate: "2026-09-22", visits: [], employees: testEmployees }));
+  });
+  act(() => {
+    tree!.update(React.createElement(AdminHomeScreen, { initialDate: "2026-09-22", visits: testVisits, employees: testEmployees }));
+  });
+
+  assert.match(JSON.stringify(tree!.toJSON()), /Abrir visita de Gases da Amazônia/);
+});
+
+test("AdminScheduleModal picks a real technician once the team list loads", async () => {
+  let savedData: AdminScheduleDraft | undefined;
+  const props = {
+    visible: true,
+    clients: sampleClients,
+    onClose: () => undefined,
+    onSave: (data: AdminScheduleDraft) => {
+      savedData = data;
+    },
+  };
+  let tree: ReturnType<typeof create>;
+  await act(async () => {
+    tree = create(React.createElement(AdminScheduleModal, { ...props, employees: [] }));
+  });
+  await act(async () => {
+    tree!.update(React.createElement(AdminScheduleModal, { ...props, employees: testEmployees }));
+  });
+
+  await act(async () => tree!.root.findByProps({ accessibilityLabel: "Escolher Ambev Manaus" }).props.onPress());
+  await act(async () => tree!.root.findByProps({ accessibilityLabel: "Salvar agendamento" }).props.onPress());
+
+  assert.equal(savedData?.employeeId, "emp-1");
 });

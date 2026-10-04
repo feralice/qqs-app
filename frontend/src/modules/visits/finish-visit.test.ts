@@ -29,6 +29,11 @@ const dummyAttendant: EmployeeSummary = {
   role: "employee",
 };
 
+const unusedSyncCalls = {
+  createVisit: async () => initialVisit,
+  startVisit: async () => initialVisit,
+};
+
 const dummyPhoto: VisitPhoto = {
   id: "photo-1",
   uri: "file://photo.jpg",
@@ -39,7 +44,7 @@ const dummyPhoto: VisitPhoto = {
 test("finishVisit queues local departure, duration and evidence before remote synchronization", async () => {
   const queue = new SyncQueue();
   const store = new VisitStore();
-  store.set(initialVisit);
+  await store.set(initialVisit);
 
   const departureLocation: ArrivalLocation = {
     latitude: -3.1025,
@@ -66,6 +71,7 @@ test("finishVisit queues local departure, duration and evidence before remote sy
     queue,
     store,
     api: {
+      ...unusedSyncCalls,
       finishVisit: async (_id, request) => {
         remoteCalledWith = request;
         return {
@@ -101,7 +107,7 @@ test("finishVisit queues local departure, duration and evidence before remote sy
 test("finishVisit preserves local completion when remote synchronization fails", async () => {
   const queue = new SyncQueue();
   const store = new VisitStore();
-  store.set(initialVisit);
+  await store.set(initialVisit);
 
   const result = await finishVisit({
     visitId: "visit-001",
@@ -117,6 +123,7 @@ test("finishVisit preserves local completion when remote synchronization fails",
     queue,
     store,
     api: {
+      ...unusedSyncCalls,
       finishVisit: async () => {
         throw new Error("network offline");
       },
@@ -136,4 +143,69 @@ test("finishVisit preserves local completion when remote synchronization fails",
   const pendingOps = queue.pending();
   assert.equal(pendingOps.length, 1);
   assert.equal(pendingOps[0].type, "visit.finish");
+});
+
+test("finishVisit sends a check-in still waiting in the queue before the check-out", async () => {
+  const queue = new SyncQueue();
+  const store = new VisitStore();
+  await store.set(initialVisit);
+  await queue.enqueue({ operationId: "start-offline", entityId: "visit-001", type: "visit.start", payload: {} });
+  const calls: string[] = [];
+
+  const result = await finishVisit({
+    visitId: "visit-001",
+    clientId: "client-001",
+    employeeId: "employee-001",
+    now: "2026-09-22T14:40:00.000Z",
+    locationProvider: { getArrivalLocation: async () => ({ status: "denied" }) },
+    queue,
+    store,
+    api: {
+      createVisit: async () => initialVisit,
+      startVisit: async () => {
+        calls.push("start");
+        return initialVisit;
+      },
+      finishVisit: async () => {
+        calls.push("finish");
+        return { ...initialVisit, status: "completed" as const };
+      },
+    },
+  });
+
+  assert.deepEqual(calls, ["start", "finish"]);
+  assert.equal(result.syncStatus, "synced");
+  assert.equal(queue.pending().length, 0);
+});
+
+test("finishVisit stays local when the queued check-in cannot be sent", async () => {
+  const queue = new SyncQueue();
+  const store = new VisitStore();
+  await store.set(initialVisit);
+  await queue.enqueue({ operationId: "start-offline", entityId: "visit-001", type: "visit.start", payload: {} });
+  const calls: string[] = [];
+
+  const result = await finishVisit({
+    visitId: "visit-001",
+    clientId: "client-001",
+    employeeId: "employee-001",
+    now: "2026-09-22T14:40:00.000Z",
+    locationProvider: { getArrivalLocation: async () => ({ status: "denied" }) },
+    queue,
+    store,
+    api: {
+      createVisit: async () => initialVisit,
+      startVisit: async () => {
+        throw new Error("offline");
+      },
+      finishVisit: async () => {
+        calls.push("finish");
+        return initialVisit;
+      },
+    },
+  });
+
+  assert.deepEqual(calls, []);
+  assert.equal(result.syncStatus, "pending");
+  assert.equal(store.get("visit-001")?.status, "completed");
 });

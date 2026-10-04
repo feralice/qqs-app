@@ -5,7 +5,7 @@ export type LocalOperation = {
   entityId: string;
   type: string;
   payload: Record<string, unknown>;
-  status: SyncStatus;
+  status: SyncStatus | "rejected";
 };
 
 export type NewLocalOperation = Omit<LocalOperation, "status">;

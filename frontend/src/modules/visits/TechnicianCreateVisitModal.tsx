@@ -1,45 +1,71 @@
 import React, { useState } from "react";
-import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import type { ClientSummary } from "@qqs/contracts";
+
+import { ClientPicker } from "../clients/ClientPicker";
+import { theme } from "../../shared/ui/theme";
 
 export type TechnicianVisitDraft = {
-  clientName: string;
-  clientAddress?: string;
+  client: ClientSummary;
   scheduledFor: string;
-  systems: Array<{ name: string; type: string }>;
 };
 
 export type TechnicianCreateVisitModalProps = {
   visible: boolean;
+  clients: ClientSummary[];
   onClose: () => void;
   onSave: (draft: TechnicianVisitDraft) => Promise<void> | void;
 };
 
-export function TechnicianCreateVisitModal({ visible, onClose, onSave }: TechnicianCreateVisitModalProps) {
-  const [clientName, setClientName] = useState("");
-  const [clientAddress, setClientAddress] = useState("");
-  const [scheduledFor, setScheduledFor] = useState(() => new Date(Date.now() + 60 * 60 * 1000).toISOString());
+export function TechnicianCreateVisitModal({ visible, clients, onClose, onSave }: TechnicianCreateVisitModalProps) {
+  const [client, setClient] = useState<ClientSummary>();
+  const [scheduledFor, setScheduledFor] = useState(() => new Date().toISOString());
+  const validDate = !Number.isNaN(Date.parse(scheduledFor));
+  const canSave = Boolean(client) && validDate;
 
   async function save() {
-    if (!clientName.trim()) return;
-    await onSave({ clientName: clientName.trim(), clientAddress: clientAddress.trim() || undefined, scheduledFor, systems: [] });
-    setClientName("");
-    setClientAddress("");
+    if (!client || !validDate) return;
+    await onSave({ client, scheduledFor: new Date(scheduledFor).toISOString() });
+    setClient(undefined);
     onClose();
   }
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={{ backgroundColor: "white", marginTop: "auto", padding: 20, gap: 12 }}>
-        <Text style={{ fontSize: 20, fontWeight: "700" }}>Adicionar visita</Text>
-        <TextInput accessibilityLabel="Nome da empresa" placeholder="Nome da empresa" value={clientName} onChangeText={setClientName} />
-        <TextInput accessibilityLabel="Endereço da empresa" placeholder="Endereço" value={clientAddress} onChangeText={setClientAddress} />
-        <TextInput accessibilityLabel="Data e horário da visita" placeholder="Data e horário ISO" value={scheduledFor} onChangeText={setScheduledFor} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Salvar visita do técnico" onPress={save}>
-          <Text>Salvar visita</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Cancelar criação da visita" onPress={onClose}>
-          <Text>Cancelar</Text>
-        </Pressable>
+      <View style={{ backgroundColor: theme.colors.white, marginTop: "auto", maxHeight: "85%", padding: 20 }}>
+        <ScrollView contentContainerStyle={{ gap: 12 }}>
+          <Text style={{ color: theme.colors.darkGray, fontSize: 20, fontWeight: "700" }}>Adicionar visita</Text>
+          {clients.length === 0 ? (
+            <Text style={{ color: theme.colors.darkGray }}>
+              Nenhuma empresa disponível. Conecte-se à internet uma vez para baixar a lista de empresas.
+            </Text>
+          ) : (
+            <ClientPicker clients={clients} selectedId={client?.id} onSelect={setClient} />
+          )}
+          <TextInput
+            accessibilityLabel="Data e horário da visita"
+            placeholder="Data e horário"
+            value={scheduledFor}
+            onChangeText={setScheduledFor}
+          />
+          {!validDate && <Text style={{ color: theme.colors.darkGray }}>Data e horário inválidos.</Text>}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Salvar visita do técnico"
+            disabled={!canSave}
+            onPress={save}
+            style={{
+              backgroundColor: canSave ? theme.colors.corporateBlue : theme.colors.lightBlue,
+              borderRadius: theme.radius.md,
+              padding: 14,
+            }}
+          >
+            <Text style={{ color: theme.colors.white, fontWeight: "700", textAlign: "center" }}>Salvar visita</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Cancelar criação da visita" onPress={onClose}>
+            <Text style={{ color: theme.colors.darkGray, textAlign: "center" }}>Cancelar</Text>
+          </Pressable>
+        </ScrollView>
       </View>
     </Modal>
   );

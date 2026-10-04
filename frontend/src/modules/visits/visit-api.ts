@@ -7,19 +7,19 @@ import type {
   StartVisitRequest,
   StartVisitResponse,
   VisitDetails,
-  VisitSummary,
 } from "@qqs/contracts";
 
 export type VisitApi = {
-  listVisits(): Promise<VisitSummary[]>;
+  listVisits(): Promise<VisitDetails[]>;
   getVisit(id: string): Promise<VisitDetails>;
   startVisit(id: string, request: StartVisitRequest): Promise<StartVisitResponse>;
   finishVisit(id: string, request: FinishVisitRequest): Promise<FinishVisitResponse>;
-  listEmployees?(): Promise<EmployeeSummary[]>;
-  createVisit?(request: CreateVisitRequest): Promise<CreateVisitResponse>;
+  listEmployees(): Promise<EmployeeSummary[]>;
+  createVisit(request: CreateVisitRequest): Promise<CreateVisitResponse>;
 };
 
 import { getDefaultApiUrl } from "../auth/auth-api";
+import { ApiError } from "../../shared/http/api-error";
 
 export function createVisitApi(
   accessToken?: string,
@@ -36,14 +36,14 @@ export function createVisitApi(
       ...init,
     });
     if (!response.ok) {
-      throw new Error(`request failed: ${response.status}`);
+      throw new ApiError(response.status);
     }
     return (await response.json()) as T;
   }
 
   return {
     async listVisits() {
-      const result = await request<{ items: VisitSummary[] }>("/visits");
+      const result = await request<{ items: VisitDetails[] }>("/visits");
       return result.items;
     },
     getVisit(id) {

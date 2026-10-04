@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "../src/modules/auth/AuthContext";
+import { DeviceDataProvider } from "../src/modules/sync/DeviceDataContext";
 
 function RootNavigator() {
   const { user, loading } = useAuth();
@@ -46,7 +47,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <RootNavigator />
+        <DeviceDataProvider>
+          <RootNavigator />
+        </DeviceDataProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

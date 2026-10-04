@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { VisitDetails } from "@qqs/contracts";
 
 import { theme } from "../../shared/ui/theme";
+import { Badge } from "../../shared/ui/components/Badge";
 import { styles } from "./VisitCard.styles";
 
 export function VisitCard({
@@ -41,6 +42,10 @@ export function VisitCard({
           <Text style={styles.metaText}>{visit.systemsCount} sistemas para vistoria</Text>
         </View>
       </View>
+
+      {visit.arrival?.outsideRadius && (
+        <Badge label="Fora do raio" variant="warning" iconName="alert-circle-outline" style={{ alignSelf: "flex-start", marginTop: 8 }} />
+      )}
 
       {visit.syncStatus !== "synced" && (
         <View style={styles.syncBadge}>

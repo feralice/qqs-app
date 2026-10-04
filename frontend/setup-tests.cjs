@@ -27,6 +27,7 @@ if (typeof document === "undefined") {
 
 const iconMockPath = path.resolve(__dirname, "mock-icons.cjs");
 const secureStoreMockPath = path.resolve(__dirname, "mock-secure-store.cjs");
+const sqliteKvMockPath = path.resolve(__dirname, "mock-sqlite-kv.cjs");
 
 Module._resolveFilename = function(req, ...args) {
   if (req === "react-native") return orig.call(this, "react-native-web", ...args);
@@ -35,6 +36,9 @@ Module._resolveFilename = function(req, ...args) {
   }
   if (req === "expo-secure-store") {
     return secureStoreMockPath;
+  }
+  if (req === "expo-sqlite/kv-store") {
+    return sqliteKvMockPath;
   }
   return orig.call(this, req, ...args);
 };
