@@ -1,6 +1,7 @@
 import type {
   ArrivalLocation,
   ClientId,
+  ClientLocation,
   EmployeeSummary,
   OperationId,
   UserId,
@@ -16,10 +17,14 @@ export type Visit = {
   status: Extract<VisitStatus, "assigned" | "in_progress" | "completed">;
   clientName?: string;
   clientAddress?: string;
+  clientLocation?: ClientLocation;
   scheduledFor?: string;
   systems?: Array<{ id: string; name: string; type: string }>;
   arrivedAt?: string;
   arrivalLocation?: ArrivalLocation;
+  arrivalDistanceMeters?: number;
+  outsideRadius?: boolean;
+  arrivalJustification?: string;
   lastStartOperationId?: OperationId;
   leftAt?: string;
   departureLocation?: ArrivalLocation;

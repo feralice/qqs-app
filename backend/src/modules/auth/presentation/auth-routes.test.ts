@@ -1,23 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRequest, createResponse } from "node-mocks-http";
-import type { Express } from "express";
+import { call, createTestApp } from "../../../test-support/http.js";
 
-import { createApp } from "../../../app.js";
-
-// bcrypt roda em várias etapas assíncronas; espera response._isEndCalled()
-// em vez de um único tick, senão a leitura chega antes do hash terminar.
-async function call(app: Express, options: Parameters<typeof createRequest>[0]) {
-  const response = createResponse();
-  app(createRequest(options), response);
-  for (let tick = 0; tick < 100 && !response._isEndCalled(); tick++) {
-    await new Promise((resolve) => setImmediate(resolve));
-  }
-  return response;
-}
 
 test("POST /auth/register creates an employee account and logs it in", async () => {
-  const response = await call(createApp(), {
+  const response = await call(await createTestApp(), {
     method: "POST",
     url: "/auth/register",
     body: { name: "Novo Técnico", email: "novo-tecnico@qqs.app", password: "senha123" },
@@ -30,7 +17,7 @@ test("POST /auth/register creates an employee account and logs it in", async () 
 });
 
 test("POST /auth/register rejects a duplicate email", async () => {
-  const app = createApp();
+  const app = await createTestApp();
   await call(app, {
     method: "POST",
     url: "/auth/register",
@@ -47,7 +34,7 @@ test("POST /auth/register rejects a duplicate email", async () => {
 });
 
 test("POST /auth/login returns tokens for a valid technician login", async () => {
-  const response = await call(createApp(), {
+  const response = await call(await createTestApp(), {
     method: "POST",
     url: "/auth/login",
     body: { email: "tecnico@qqs.app", password: "Tecnico123!" },
@@ -61,7 +48,7 @@ test("POST /auth/login returns tokens for a valid technician login", async () =>
 });
 
 test("POST /auth/login rejects a wrong password", async () => {
-  const response = await call(createApp(), {
+  const response = await call(await createTestApp(), {
     method: "POST",
     url: "/auth/login",
     body: { email: "tecnico@qqs.app", password: "senha-errada" },
@@ -71,7 +58,7 @@ test("POST /auth/login rejects a wrong password", async () => {
 });
 
 test("POST /auth/refresh issues a new access token from a valid refresh token", async () => {
-  const app = createApp();
+  const app = await createTestApp();
   const login = await call(app, {
     method: "POST",
     url: "/auth/login",
@@ -89,7 +76,7 @@ test("POST /auth/refresh issues a new access token from a valid refresh token", 
 });
 
 test("POST /auth/logout revokes the refresh token", async () => {
-  const app = createApp();
+  const app = await createTestApp();
   const login = await call(app, {
     method: "POST",
     url: "/auth/login",
@@ -113,12 +100,12 @@ test("POST /auth/logout revokes the refresh token", async () => {
 });
 
 test("GET /visits without a token is rejected", async () => {
-  const response = await call(createApp(), { method: "GET", url: "/visits" });
+  const response = await call(await createTestApp(), { method: "GET", url: "/visits" });
   assert.equal(response.statusCode, 401);
 });
 
 test("POST /visits allows an authenticated technician to create their own visit", async () => {
-  const app = createApp();
+  const app = await createTestApp();
   const login = await call(app, {
     method: "POST",
     url: "/auth/login",
@@ -129,7 +116,7 @@ test("POST /visits allows an authenticated technician to create their own visit"
     method: "POST",
     url: "/visits",
     headers: { authorization: `Bearer ${login._getJSONData().accessToken}` },
-    body: { id: "visit-new", clientId: "client-1" },
+    body: { id: "visit-new", clientId: "client-001" },
   });
 
   assert.equal(response.statusCode, 201);

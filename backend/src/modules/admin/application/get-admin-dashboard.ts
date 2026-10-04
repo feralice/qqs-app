@@ -63,13 +63,26 @@ export async function getAdminDashboard(
       completed: visits.filter((visit) => visit.status === "completed").length,
       overdue: overdueVisits.length,
     },
-    alerts: overdueVisits.map((visit) => ({
-      id: `overdue:${visit.id}:${options.date}`,
-      visitId: visit.id,
-      type: "overdue" as const,
-      message: `Visita atrasada${visit.clientName ? `: ${visit.clientName}` : ""}`,
-      createdAt: now,
-    })),
+    alerts: [
+      ...overdueVisits.map((visit) => ({
+        id: `overdue:${visit.id}:${options.date}`,
+        visitId: visit.id,
+        type: "overdue" as const,
+        message: `Visita atrasada${visit.clientName ? `: ${visit.clientName}` : ""}`,
+        createdAt: now,
+      })),
+      ...visits
+        .filter((visit) => visit.outsideRadius)
+        .map((visit) => ({
+          id: `outside_radius:${visit.id}`,
+          visitId: visit.id,
+          type: "outside_radius" as const,
+          message: `Check-in fora do raio: ${visit.clientName ?? visit.clientId} (${
+            visit.arrivalDistanceMeters === undefined ? "sem GPS" : `${visit.arrivalDistanceMeters} m`
+          })`,
+          createdAt: visit.arrivedAt ?? now,
+        })),
+    ],
     employees,
     lastUpdatedAt: now,
     isLoaded: true,

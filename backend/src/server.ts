@@ -1,9 +1,16 @@
+import "dotenv/config";
+
 import { createApp } from "./app.js";
+import { loadServerConfig } from "./config.js";
+import { openDatabase } from "./shared/db/database.js";
+import { seedDevelopmentData } from "./shared/db/seed.js";
 
-const port = Number(process.env.PORT ?? 3333);
-const host = process.env.HOST ?? "0.0.0.0";
+const config = loadServerConfig(process.env);
+const { db } = await openDatabase({ url: config.databaseUrl, dataDir: config.pgliteDataDir });
+if (config.seedDevelopmentData) {
+  await seedDevelopmentData(db);
+}
 
-createApp().listen(port, host, () => {
-  console.log(`QQS backend listening on http://${host}:${port}`);
+createApp({ db, jwtSecret: config.jwtSecret }).listen(config.port, config.host, () => {
+  console.log(`QQS backend listening on http://${config.host}:${config.port}`);
 });
-

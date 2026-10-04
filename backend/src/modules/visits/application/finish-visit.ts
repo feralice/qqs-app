@@ -24,6 +24,7 @@ export type FinishVisitInput = {
 
 export type FinishVisitRepository = {
   findById(id: VisitId): Promise<Visit | undefined>;
+  findByFinishOperationId(operationId: OperationId): Promise<Visit | undefined>;
   save(visit: Visit): Promise<Visit>;
 };
 
@@ -31,7 +32,15 @@ export async function finishVisit(
   repository: FinishVisitRepository,
   input: FinishVisitInput,
 ): Promise<Visit> {
+  const appliedOperation = await repository.findByFinishOperationId(input.operationId);
+  if (appliedOperation) {
+    return appliedOperation;
+  }
+
   const existingVisit = await repository.findById(input.visitId);
+  if (existingVisit?.status !== "in_progress") {
+    throw new Error("visit not in progress");
+  }
 
   const arrivedTime = existingVisit?.arrivedAt
     ? new Date(existingVisit.arrivedAt).getTime()

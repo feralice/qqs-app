@@ -2,27 +2,35 @@ import cors from "cors";
 import express, { type Express } from "express";
 
 import { healthRouter } from "./shared/http/health-route.js";
-import { InMemoryVisitRepository } from "./modules/visits/infrastructure/in-memory-visit-repository.js";
+import { DrizzleVisitRepository } from "./modules/visits/infrastructure/drizzle-visit-repository.js";
 import { visitRoutes } from "./modules/visits/presentation/visit-routes.js";
-import { InMemoryUserRepository } from "./modules/auth/infrastructure/in-memory-user-repository.js";
-import { InMemoryRefreshTokenRepository } from "./modules/auth/infrastructure/in-memory-refresh-token-repository.js";
+import { DrizzleUserRepository } from "./modules/auth/infrastructure/drizzle-user-repository.js";
+import { DrizzleRefreshTokenRepository } from "./modules/auth/infrastructure/drizzle-refresh-token-repository.js";
 import { BcryptPasswordHasher } from "./modules/auth/infrastructure/bcrypt-password-hasher.js";
 import { JwtTokenService } from "./modules/auth/infrastructure/jwt-token-service.js";
 import { LoginRateLimiter } from "./modules/auth/infrastructure/login-rate-limiter.js";
 import { authRoutes } from "./modules/auth/presentation/auth-routes.js";
 import { authenticate, authorize } from "./modules/auth/presentation/authenticate.js";
 import { adminRoutes } from "./modules/admin/presentation/admin-routes.js";
+import type { Database } from "./shared/db/database.js";
+import { DrizzleClientRepository } from "./modules/clients/infrastructure/drizzle-client-repository.js";
+import { clientRoutes } from "./modules/clients/presentation/client-routes.js";
 
-export function createApp(): Express {
+export type AppDependencies = {
+  db: Database;
+  jwtSecret?: string;
+};
+
+export function createApp({ db, jwtSecret }: AppDependencies): Express {
   const app = express();
 
-  const userRepository = new InMemoryUserRepository();
-  const tokens = new JwtTokenService(process.env.JWT_SECRET ?? "dev-only-secret-troque-em-producao");
+  const userRepository = new DrizzleUserRepository(db);
+  const tokens = new JwtTokenService(jwtSecret ?? process.env.JWT_SECRET ?? "dev-only-secret-troque-em-producao");
   const authDeps = {
     users: userRepository,
     hasher: new BcryptPasswordHasher(),
     tokens,
-    refreshTokens: new InMemoryRefreshTokenRepository(),
+    refreshTokens: new DrizzleRefreshTokenRepository(db),
     rateLimiter: new LoginRateLimiter(),
   };
 
@@ -38,13 +46,10 @@ export function createApp(): Express {
 
   // Tudo registrado a partir daqui exige login.
   app.use(authenticate(tokens));
-  const visitRepository = new InMemoryVisitRepository();
-  app.use(
-    visitRoutes(visitRepository, {
-      requireSupervisor: authorize("supervisor"),
-      userRepository,
-    }),
-  );
+  const clientRepository = new DrizzleClientRepository(db);
+  app.use(clientRoutes(clientRepository, { requireSupervisor: authorize("supervisor") }));
+  const visitRepository = new DrizzleVisitRepository(db);
+  app.use(visitRoutes(visitRepository, { userRepository, clientRepository }));
   app.use(
     "/admin",
     adminRoutes(visitRepository, {

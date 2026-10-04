@@ -1,43 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRequest, createResponse } from "node-mocks-http";
-import type { Express } from "express";
+import type { RequestOptions } from "node-mocks-http";
 
-import { createApp } from "../../../app.js";
-
-// bcrypt (usado no login de apoio) roda em várias etapas assíncronas; espera
-// response._isEndCalled() em vez de um único tick.
-async function call(app: Express, options: Parameters<typeof createRequest>[0]) {
-  const response = createResponse();
-  app(createRequest(options), response);
-  for (let tick = 0; tick < 100 && !response._isEndCalled(); tick++) {
-    await new Promise((resolve) => setImmediate(resolve));
-  }
-  return response;
-}
-
-async function login(app: Express, role: "employee" | "supervisor" = "employee") {
-  const credentials = role === "supervisor"
-    ? { email: "admin1@qqs.app", password: "Admin123!" }
-    : { email: "tecnico@qqs.app", password: "Tecnico123!" };
-
-  const loginResponse = await call(app, {
-    method: "POST",
-    url: "/auth/login",
-    body: credentials,
-  });
-  return loginResponse._getJSONData().accessToken as string;
-}
+import { authedCall, call, createTestApp, login, type TestRole } from "../../../test-support/http.js";
 
 // Cada teste ganha seu próprio app + login, pra não depender de estado de outro teste.
-async function request(options: NonNullable<Parameters<typeof createRequest>[0]>, role: "employee" | "supervisor" = "employee") {
-  const app = createApp();
-  const token = await login(app, role);
-
-  return call(app, {
-    ...options,
-    headers: { authorization: `Bearer ${token}`, ...options.headers },
-  });
+async function request(options: RequestOptions, role: TestRole = "employee") {
+  const app = await createTestApp();
+  return authedCall(app, await login(app, role), options);
 }
 
 test("GET /visits returns the development visit", async () => {
@@ -55,12 +25,12 @@ test("GET /visits/:id returns visit details", async () => {
 });
 
 test("POST /visits/:id/start records an idempotent arrival", async () => {
-  const app = createApp();
+  const app = await createTestApp();
   const token = await login(app, "employee");
   const body = {
     operationId: "operation-route-001",
     arrivedAt: "2026-09-20T12:00:00.000Z",
-    location: { latitude: -3.119, longitude: -60.021, accuracy: 12.5 },
+    location: { latitude: -3.102, longitude: -60.0251, accuracy: 12.5 },
   };
   const first = await call(app, {
     method: "POST",
@@ -95,7 +65,7 @@ test("POST /visits/:id/start rejects invalid coordinates", async () => {
 });
 
 test("POST /visits/:id/finish records departure, duration, description, attendants and photos", async () => {
-  const app = createApp();
+  const app = await createTestApp();
   const token = await login(app, "employee");
 
   await call(app, {
@@ -105,7 +75,7 @@ test("POST /visits/:id/finish records departure, duration, description, attendan
     body: {
       operationId: "op-start-finish-test",
       arrivedAt: "2026-09-22T13:00:00.000Z",
-      location: { latitude: -3.1, longitude: -60.0 },
+      location: { latitude: -3.102, longitude: -60.0251 },
     },
   });
 
@@ -148,24 +118,20 @@ test("POST /visits allows supervisor to schedule a new visit", async () => {
     method: "POST",
     url: "/visits",
     body: {
-      clientId: "client-002",
-      clientName: "Petrobras Distribuidora",
-      clientAddress: "Distrito Industrial, Manaus",
-      employeeId: "employee-001",
+      clientId: "client-001",
+      employeeId: "employee-002",
       scheduledFor: "2026-09-23T10:00:00.000Z",
-      systems: [
-        { id: "sys-01", name: "Chiller 1", type: "chiller" },
-        { id: "sys-02", name: "Caldeira Central", type: "boiler" },
-      ],
     },
   }, "supervisor");
 
   assert.equal(response.statusCode, 201);
   const data = response._getJSONData();
   assert.ok(data.id);
-  assert.equal(data.clientName, "Petrobras Distribuidora");
+  assert.equal(data.clientName, "Gases da Amazônia");
+  assert.equal(data.employeeId, "employee-002");
   assert.equal(data.status, "assigned");
-  assert.equal(data.systemsCount, 2);
+  assert.equal(data.systemsCount, 3);
+  assert.deepEqual(data.clientLocation, { latitude: -3.1019, longitude: -60.025, radiusMeters: 200 });
 });
 
 test("POST /visits allows a technician to create a visit assigned to themselves", async () => {
@@ -173,8 +139,7 @@ test("POST /visits allows a technician to create a visit assigned to themselves"
     method: "POST",
     url: "/visits",
     body: {
-      clientId: "client-technician",
-      clientName: "Cliente criado pelo técnico",
+      clientId: "client-001",
       scheduledFor: "2026-09-24T11:00:00.000Z",
       employeeId: "employee-002",
       systems: [],
@@ -183,11 +148,11 @@ test("POST /visits allows a technician to create a visit assigned to themselves"
 
   assert.equal(response.statusCode, 201);
   assert.equal(response._getJSONData().employeeId, "employee-001");
-  assert.equal(response._getJSONData().clientName, "Cliente criado pelo técnico");
+  assert.equal(response._getJSONData().clientName, "Gases da Amazônia");
 });
 
 test("POST /admin/visits/:id/reschedule allows supervisor to change the schedule idempotently", async () => {
-  const app = createApp();
+  const app = await createTestApp();
   const token = await login(app, "supervisor");
   const options = {
     method: "POST" as const,
@@ -211,4 +176,112 @@ test("GET /admin/dashboard returns the supervisor summary", async () => {
   assert.equal(response.statusCode, 200);
   assert.equal(response._getJSONData().date, "2026-09-21");
   assert.equal(response._getJSONData().counts.scheduled, 1);
+});
+
+const outside = { latitude: -3.119, longitude: -60.021 };
+
+test("POST /visits/:id/start inside the radius is not flagged", async () => {
+  const response = await request({
+    method: "POST",
+    url: "/visits/visit-001/start",
+    body: { operationId: "op-inside", arrivedAt: "2026-09-21T13:02:00.000Z", location: { latitude: -3.102, longitude: -60.0251 } },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response._getJSONData().arrival.outsideRadius, false);
+  assert.equal(response._getJSONData().arrival.distanceMeters, 16);
+});
+
+test("POST /visits/:id/start outside the radius requires a justification", async () => {
+  const app = await createTestApp();
+  const token = await login(app, "employee");
+  const start = (body: object) => authedCall(app, token, { method: "POST", url: "/visits/visit-001/start", body });
+
+  const rejected = await start({ operationId: "op-out-1", arrivedAt: "2026-09-21T13:02:00.000Z", location: outside });
+  assert.equal(rejected.statusCode, 422);
+  assert.equal(rejected._getJSONData().error, "justification required");
+
+  const accepted = await start({
+    operationId: "op-out-2",
+    arrivedAt: "2026-09-21T13:02:00.000Z",
+    location: outside,
+    justification: "Portaria fica longe da planta",
+  });
+  assert.equal(accepted.statusCode, 200);
+  assert.equal(accepted._getJSONData().arrival.outsideRadius, true);
+  assert.equal(accepted._getJSONData().arrival.justification, "Portaria fica longe da planta");
+});
+
+test("POST /visits with the same device id twice does not duplicate the visit", async () => {
+  const app = await createTestApp();
+  const token = await login(app, "employee");
+  const body = { id: "3f6c1d1e-7a55-4e0b-9a7e-2f1b9c3d4e5f", clientId: "client-001", scheduledFor: "2026-09-25T09:00:00.000Z" };
+
+  const first = await authedCall(app, token, { method: "POST", url: "/visits", body });
+  const retry = await authedCall(app, token, { method: "POST", url: "/visits", body });
+
+  assert.equal(first.statusCode, 201);
+  assert.equal(retry.statusCode, 200);
+  const list = await authedCall(app, token, { method: "GET", url: "/visits" });
+  assert.equal(list._getJSONData().items.filter((item: { id: string }) => item.id === body.id).length, 1);
+});
+
+test("POST /visits rejects an unknown or inactive company", async () => {
+  const app = await createTestApp();
+  const admin = await login(app, "supervisor");
+  const unknown = await authedCall(app, admin, { method: "POST", url: "/visits", body: { clientId: "missing", employeeId: "employee-001" } });
+  assert.equal(unknown.statusCode, 404);
+
+  await authedCall(app, admin, { method: "PATCH", url: "/clients/client-001", body: { active: false } });
+  const inactive = await authedCall(app, admin, { method: "POST", url: "/visits", body: { clientId: "client-001", employeeId: "employee-001" } });
+  assert.equal(inactive.statusCode, 404);
+});
+
+test("POST /visits rejects an unknown technician chosen by the supervisor", async () => {
+  const response = await request(
+    { method: "POST", url: "/visits", body: { clientId: "client-001", employeeId: "ghost" } },
+    "supervisor",
+  );
+  assert.equal(response.statusCode, 400);
+});
+
+test("GET /visits shows a technician only their own visits", async () => {
+  const app = await createTestApp();
+  const carlos = await login(app, "employee", { email: "carlos.silva@qqs.app", password: "Tecnico123!" });
+  const admin = await login(app, "supervisor");
+
+  const own = await authedCall(app, carlos, { method: "GET", url: "/visits" });
+  assert.deepEqual(own._getJSONData().items, []);
+  const all = await authedCall(app, admin, { method: "GET", url: "/visits" });
+  assert.equal(all._getJSONData().items.length, 1);
+  assert.equal(all._getJSONData().items[0].clientLocation.radiusMeters, 200);
+});
+
+test("GET /visits/:id hides another technician's visit", async () => {
+  const app = await createTestApp();
+  const carlos = await login(app, "employee", { email: "carlos.silva@qqs.app", password: "Tecnico123!" });
+  const response = await authedCall(app, carlos, { method: "GET", url: "/visits/visit-001" });
+  assert.equal(response.statusCode, 404);
+});
+
+test("POST /visits/:id/finish on a visit that never started returns 409", async () => {
+  const response = await request({
+    method: "POST",
+    url: "/visits/visit-001/finish",
+    body: { operationId: "op-finish-first", finishedAt: "2026-09-21T14:00:00.000Z" },
+  });
+  assert.equal(response.statusCode, 409);
+});
+
+test("POST /visits replay with another technician's visit id reveals nothing", async () => {
+  const app = await createTestApp();
+  const carlos = await login(app, "employee", { email: "carlos.silva@qqs.app", password: "Tecnico123!" });
+  const response = await authedCall(app, carlos, {
+    method: "POST",
+    url: "/visits",
+    body: { id: "visit-001", clientId: "client-001" },
+  });
+
+  assert.equal(response.statusCode, 404);
+  assert.equal(response._getJSONData().clientName, undefined);
 });

@@ -1,37 +1,22 @@
-import type { VisitId } from "@qqs/contracts";
+import type { OperationId, UserId, VisitId } from "@qqs/contracts";
 
 import type { Visit } from "../domain/visit.js";
 import type { VisitRepository } from "../application/start-visit.js";
 
+// Fake para testes de caso de uso; a aplicação usa DrizzleVisitRepository.
 export class InMemoryVisitRepository implements VisitRepository {
-  private readonly visits = new Map<string, Visit>([
-    [
-      "visit-001",
-      {
-        id: "visit-001",
-        clientId: "client-001",
-        employeeId: "employee-001",
-        clientName: "Gases da Amazônia",
-        clientAddress: "Manaus, AM",
-        scheduledFor: "2026-09-21T13:00:00.000Z",
-        systems: [
-          { id: "system-001", name: "Torre 1", type: "tower" },
-          { id: "system-002", name: "Torre 2", type: "tower" },
-          { id: "system-003", name: "Caldeira 1", type: "boiler" },
-        ],
-        status: "assigned",
-      },
-    ],
-  ]);
+  private readonly visits = new Map<string, Visit>();
 
   async findById(id: VisitId): Promise<Visit | undefined> {
     return this.visits.get(id);
   }
 
-  async findByStartOperationId(operationId: string): Promise<Visit | undefined> {
-    return [...this.visits.values()].find(
-      (visit) => visit.lastStartOperationId === operationId,
-    );
+  async findByStartOperationId(operationId: OperationId): Promise<Visit | undefined> {
+    return [...this.visits.values()].find((visit) => visit.lastStartOperationId === operationId);
+  }
+
+  async findByFinishOperationId(operationId: OperationId): Promise<Visit | undefined> {
+    return [...this.visits.values()].find((visit) => visit.lastFinishOperationId === operationId);
   }
 
   async save(visit: Visit): Promise<Visit> {
@@ -39,7 +24,9 @@ export class InMemoryVisitRepository implements VisitRepository {
     return visit;
   }
 
-  async list(): Promise<Visit[]> {
-    return [...this.visits.values()];
+  async list(filter?: { employeeId?: UserId }): Promise<Visit[]> {
+    return [...this.visits.values()].filter(
+      (visit) => !filter?.employeeId || visit.employeeId === filter.employeeId,
+    );
   }
 }

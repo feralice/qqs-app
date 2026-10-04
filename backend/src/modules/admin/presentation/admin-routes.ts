@@ -1,12 +1,13 @@
 import { Router, type RequestHandler } from "express";
 
-import { createAdminActions, type AdminVisitRepository } from "../application/admin-actions.js";
+import { createAdminActions } from "../application/admin-actions.js";
+import type { VisitRepository } from "../../visits/application/start-visit.js";
 import type { AdminDashboardSummary } from "@qqs/contracts";
 import { getAdminDashboard } from "../application/get-admin-dashboard.js";
 import { searchVisitHistory } from "../application/search-visit-history.js";
 
 export function adminRoutes(
-  repository: AdminVisitRepository,
+  repository: VisitRepository,
   options: { requireSupervisor: RequestHandler; listEmployees?: () => Promise<Array<{ id: string; name: string; email: string; role: "employee" | "supervisor" }>> },
 ): Router {
   const router = Router();
@@ -38,7 +39,7 @@ export function adminRoutes(
   router.post("/visits/:id/reschedule", options.requireSupervisor, async (request, response) => {
     try {
       const visit = await actions.rescheduleVisit({
-        visitId: request.params.id,
+        visitId: String(request.params.id),
         scheduledFor: request.body.scheduledFor,
         operationId: request.body.operationId,
       });
@@ -55,7 +56,7 @@ export function adminRoutes(
   router.post("/visits/:id/reassign", options.requireSupervisor, async (request, response) => {
     try {
       const visit = await actions.reassignVisit({
-        visitId: request.params.id,
+        visitId: String(request.params.id),
         employeeId: request.body.employeeId,
         operationId: request.body.operationId,
       });
@@ -71,7 +72,7 @@ export function adminRoutes(
 
   router.post("/alerts/:id/resolve", options.requireSupervisor, async (request, response) => {
     const result = await actions.resolveAlert({
-      alertId: request.params.id,
+      alertId: String(request.params.id),
       operationId: request.body.operationId,
     });
     response.json(result);

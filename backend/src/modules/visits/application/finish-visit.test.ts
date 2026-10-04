@@ -39,3 +39,43 @@ test("finishVisit records departure location, duration, description, attendants 
   assert.equal(updated.attendants?.length, 1);
   assert.equal(updated.photos?.length, 1);
 });
+
+test("finishVisit is idempotent for the same operation", async () => {
+  const repository = new InMemoryVisitRepository();
+  await repository.save({
+    id: "visit-002",
+    clientId: "client-001",
+    employeeId: "emp-1",
+    status: "in_progress",
+    arrivedAt: "2026-09-22T13:00:00.000Z",
+  });
+  const input = {
+    visitId: "visit-002",
+    clientId: "client-001",
+    employeeId: "emp-1",
+    operationId: "op-finish-same",
+    finishedAt: "2026-09-22T14:00:00.000Z",
+  };
+
+  const first = await finishVisit(repository, input);
+  const retry = await finishVisit(repository, { ...input, finishedAt: "2026-09-22T15:30:00.000Z" });
+
+  assert.deepEqual(retry, first);
+  assert.equal((await repository.findById("visit-002"))?.finishedAt, "2026-09-22T14:00:00.000Z");
+});
+
+test("finishVisit refuses a visit that has not started", async () => {
+  const repository = new InMemoryVisitRepository();
+  await repository.save({ id: "visit-003", clientId: "client-001", employeeId: "emp-1", status: "assigned" });
+
+  await assert.rejects(
+    finishVisit(repository, {
+      visitId: "visit-003",
+      clientId: "client-001",
+      employeeId: "emp-1",
+      operationId: "op-finish-early",
+      finishedAt: "2026-09-22T14:00:00.000Z",
+    }),
+    /visit not in progress/,
+  );
+});
