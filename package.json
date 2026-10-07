@@ -11,8 +11,9 @@
     "dev:frontend": "npm start --workspace=@qqs/frontend",
     "dev:web": "npm run web --workspace=@qqs/frontend",
     "typecheck": "tsc -p tsconfig.base.json --noEmit",
-    "test": "node --test",
-    "lint": "tsc -p tsconfig.base.json --noEmit"
+    "test": "npm test --workspaces --if-present",
+    "lint": "tsc -p tsconfig.base.json --noEmit",
+    "typecheck:all": "npm run typecheck && npm run typecheck --workspace=@qqs/backend && npm run typecheck --workspace=@qqs/frontend"
   },
   "devDependencies": {
     "expo-router": "~57.0.22",

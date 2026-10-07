@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Tipos, testes e migrações
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar dependências do lockfile
+        run: npm ci
+      - name: Conferir tipos nos três projetos
+        run: npm run typecheck:all
+      - name: Verificar histórico de migrações
+        run: npm run db:check --workspace=@qqs/backend
+      - name: Testar contratos
+        run: npm test --workspace=@qqs/contracts
+      - name: Testar backend com cobertura
+        run: npm run test:coverage --workspace=@qqs/backend | tee backend-coverage.txt
+      - name: Testar frontend
+        run: npm test --workspace=@qqs/frontend
+      - name: Guardar relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend-coverage.txt
+          if-no-files-found: ignore
+          retention-days: 14

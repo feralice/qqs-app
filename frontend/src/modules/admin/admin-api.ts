@@ -33,7 +33,11 @@ export function createAdminApi(accessToken?: string, fetcher: typeof fetch = fet
       return request<AdminDashboardSummary>(`/admin/dashboard?date=${encodeURIComponent(date)}`);
     },
     getHistory(filters) {
-      const query = new URLSearchParams(filters).toString();
+      const query = new URLSearchParams(
+        Object.entries(filters).filter((entry): entry is [string, string] =>
+          typeof entry[1] === "string" && entry[1].trim() !== "",
+        ),
+      ).toString();
       return request<{ items: AdminHistoryItem[]; total: number }>(`/admin/history?${query}`);
     },
     async rescheduleVisit(visitId, scheduledFor, operationId) {

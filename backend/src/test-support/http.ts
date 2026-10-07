@@ -1,9 +1,10 @@
 import { createRequest, createResponse, type RequestOptions } from "node-mocks-http";
 import type { Express } from "express";
 
-import { createApp } from "../app.js";
-import { createTestDatabase } from "../shared/db/test-database.js";
-import { seedDevelopmentData } from "../shared/db/seed.js";
+import { createApp } from "../presentation/app.js";
+import { createTestDatabase } from "../infrastructure/db/test-database.js";
+import { seedDevelopmentData } from "../infrastructure/db/seed.js";
+import { createLogger } from "../infrastructure/logging/logger.js";
 
 export type TestRole = "employee" | "supervisor";
 
@@ -15,7 +16,7 @@ const credentials: Record<TestRole, { email: string; password: string }> = {
 export async function createTestApp(): Promise<Express> {
   const db = await createTestDatabase();
   await seedDevelopmentData(db);
-  return createApp({ db, jwtSecret: "test-secret" });
+  return createApp({ db, jwtSecret: "test-secret", logger: createLogger("silent") });
 }
 
 // bcrypt e o banco respondem em várias etapas assíncronas; espera o fim da

@@ -1,71 +1,112 @@
-# Arquitetura de Software — QQS App
+# Arquitetura de Software: QQS App
 
-**Versão:** 0.1  
-**Status:** Base aprovada para implementação inicial
+**Versão:** 0.2
 
-## Decisão
+**Status:** arquitetura implementada para autenticação, empresas, visitas e administração
 
-O QQS App será um monólito modular com Clean Architecture no backend e uma aplicação React Native/Expo offline-first no mobile.
+## Visão geral
 
-## Componentes
+O QQS App usa um monólito modular com Clean Architecture no backend e React Native/Expo no frontend. A versão web compartilha os módulos de interface e usa adaptações de armazenamento. Casos de uso e contratos permitem testar regras sem depender de Express ou de um servidor de banco externo.
 
-```text
-Frontend — Expo/React Native
-  ├─ UI e navegação
-  ├─ casos de uso do dispositivo
-  ├─ SQLite local
-  └─ fila de sincronização
-          │ REST/JSON
-          ▼
-Backend — Express/TypeScript
-  ├─ módulos de negócio
-  ├─ autenticação/autorização
-  ├─ casos de uso
-  ├─ PostgreSQL
-  ├─ armazenamento de arquivos
-  └─ geração de PDF
+```mermaid
+flowchart LR
+  Mobile[Expo / React Native] -->|REST / JSON| HTTP[Presentation]
+  Mobile --> Local[Cache e fila local]
+  HTTP --> Application[Application: commands / queries / ports]
+  HTTP --> Infra[Infrastructure: adaptadores]
+  Infra --> Application
+  Application --> Domain[Domain]
+  Domain --> Contracts[Contratos compartilhados]
+  Infra --> DB[(PostgreSQL / PGlite)]
 ```
 
-## Mobile
+As setas de camadas representam dependências de código. A composição das implementações acontece em `backend/src/presentation/app.ts`.
 
-O banco local é a fonte de leitura e escrita durante o preenchimento de uma visita. A interface não dependerá de uma chamada de rede para salvar respostas. Cada alteração relevante gera uma operação idempotente na fila local. A sincronização será retomável e exibirá ao usuário os estados `pending`, `syncing`, `synced` e `failed`.
+## Estrutura do backend
 
-A identidade visual do frontend seguirá a paleta fornecida:
+```text
+backend/src/
+  domain/
+    common/           actor e AppError por categoria
+    auth/             usuário e erros de autenticação
+    clients/          invariantes de empresa e sistemas
+    visits/           entidade, visibilidade e regras de chegada
+  application/
+    common/           Clock, IdempotencyStore e TabularExporter
+    admin/            comandos e consultas administrativas
+    auth/             comandos de sessão e consulta de técnicos
+    clients/          comandos de cadastro e consultas
+    visits/           criação, início, conclusão e consultas visíveis
+    notifications/    serviço ainda não conectado a provedores
+  infrastructure/
+    db/               Drizzle, schema e seed
+    persistence/      implementações dos repositórios
+    security/         JWT, bcrypt e rate limiter
+    idempotency/      resultados persistidos de operações admin
+    csv/              formato e proteção de células
+    clock/            relógio do sistema
+    logging/          Pino e redaction
+  presentation/
+    http/             ApiRouter, autenticação, erros e OpenAPI
+    routes/           admin, auth, clients, health e visits
+    app.ts            composition root
+  test-support/       helpers HTTP e fakes em memória
+  architecture.test.ts
+  config.ts
+  server.ts
+```
 
-- Azul corporativo: `#0876C9` — cabeçalho e navegação principal.
-- Azul-claro: `#B9DDF8` — fundos e superfícies suaves.
-- Verde-água: `#72BAB8` — contato e detalhes de botões.
-- Branco: `#FFFFFF` — fundos, textos do cabeçalho e botões.
-- Cinza quase preto: `#242424` — rodapé e áreas de alto contraste.
-- Cinza-escuro: `#383838` — títulos e textos principais.
+`domain` depende apenas de si e dos contratos. `application` usa domínio, contratos e módulos nativos do Node. Adaptadores implementam ports da aplicação; apresentação compõe as camadas e traduz HTTP. `architecture.test.ts` confere imports estáticos. Ele não substitui revisão de imports dinâmicos nem de regras indevidamente colocadas em handlers.
 
-O app será organizado por módulos de negócio, com separação entre apresentação, casos de uso, persistência local e integração remota. O armazenamento local usará SQLite; dados sensíveis de sessão ficarão em armazenamento seguro do dispositivo.
+Comandos e consultas são separados na aplicação e compartilham o banco. Não há event sourcing. `Clock` torna padrões de data testáveis, `TabularExporter` mantém CSV fora dos casos de uso e `IdempotencyStore` abstrai a persistência de resultados administrativos.
 
-## Backend
+## Contrato HTTP
 
-O backend será dividido por módulos (`auth`, `users`, `clients`, `systems`, `checklists`, `visits`, `reports` e `sync`). Cada módulo poderá conter `domain`, `application`, `infrastructure` e `presentation`.
+Rotas são registradas com `api.route`, com política `public`, `authenticated` ou `supervisor`. Guards rodam antes da validação de body e query. Schemas Zod definem o formato de entrada e a documentação das respostas, com compatibilidade conferida contra `@qqs/contracts` quando aplicável.
 
-As regras de negócio não dependerão de Express, Prisma ou serviços externos. Controllers converterão HTTP em comandos de aplicação; repositórios e adaptadores serão implementações de portas definidas pela aplicação.
+A geração com `z.toJSONSchema` produz OpenAPI 3.1 em `/openapi.json`; Swagger UI fica em `/docs/`. Schemas de saída não são uma validação automática do retorno. Presenters convertem entidades para contratos e omitem ids internos de operações.
 
-## Persistência e arquivos
+Erros de domínio usam categorias e mensagens preservadas para compatibilidade. O handler central traduz categorias em status e retorna `{ error, details? }`. Falhas inesperadas são registradas e retornam mensagem genérica. Pino aplica redaction de senha e token; o cliente de autenticação não registra payloads sensíveis.
 
-PostgreSQL será a fonte oficial dos dados sincronizados. Drizzle ORM será usado como adaptador de persistência, com schema TypeScript e migrações SQL versionadas. Fotos, assinaturas e PDFs ficarão em armazenamento de objetos; o banco guardará metadados e referências.
+## Frontend e dados locais
 
-## Sincronização
+`frontend/app` contém a navegação. Os módulos em `frontend/src/modules` separam autenticação, empresas, visitas, administração, localização e sincronização. Dados de visitas, empresas e fila usam Expo SQLite no aparelho e localStorage no navegador. A sessão usa Expo SecureStore no dispositivo.
 
-O mobile criará UUIDs no dispositivo. O backend usará esses identificadores e chaves de idempotência para que retentativas não dupliquem visitas, respostas ou assinaturas. Uma visita ficará editável localmente até ser encerrada; depois de sincronizada, alterações posteriores exigirão uma nova versão ou revisão autorizada.
+O app permite trabalhar com dados já baixados e retoma a fila ao abrir a lista ou solicitar sincronização. Nem toda ação de administração é uma operação offline. Autenticação e novos downloads exigem conexão.
 
-## Segurança
+A interface usa a seguinte paleta:
 
-O acesso usará autenticação por e-mail ou telefone, com senha no MVP. A API emitirá access token de curta duração e refresh token revogável. Toda rota verificará autenticação e autorização por perfil. Senhas serão armazenadas com hash forte.
+| Uso | Cor |
+| --- | --- |
+| Cabeçalho e navegação | `#0876C9` |
+| Superfícies suaves | `#B9DDF8` |
+| Contato e detalhes | `#72BAB8` |
+| Fundos e textos do cabeçalho | `#FFFFFF` |
+| Áreas de contraste | `#242424` |
+| Títulos e textos principais | `#383838` |
 
-## PDF e assinatura
+## Persistência e sincronização
 
-O backend montará o relatório a partir dos dados persistidos, incluindo cliente, sistemas, respostas, horários, participantes, observações e assinatura. A assinatura do MVP será uma confirmação desenhada na tela do dispositivo; requisitos jurídicos adicionais permanecem em aberto.
+PostgreSQL é o banco remoto e Drizzle é o adaptador. Sem `DATABASE_URL`, o backend usa PGlite persistido localmente; testes usam PGlite em memória. Migrações SQL em `backend/drizzle` são aplicadas ao abrir o banco. O seed não roda em produção.
 
-## Decisões adiadas
+O aparelho mantém ids estáveis para visitas e operações. A criação verifica o id da visita; início e conclusão guardam ids de operação. Ações admin persistem respostas em `processed_operations`. Alteração e registro de idempotência ainda não fazem parte de uma transação única, portanto não oferecem execução única para toda condição de falha ou concorrência. Veja [ADR 0005](../adr/0005-offline-fila-idempotencia.md).
 
-- Serviço de SMS para autenticação por telefone.
-- Edição de modelos de checklist pelo próprio app/painel.
-- Política para edição/revisão de visitas já sincronizadas.
-- Provedor definitivo de armazenamento de objetos.
+O histórico usa o mesmo filtro em JSON e CSV. O CSV tem separador `;`, BOM UTF-8 e proteção contra células interpretadas como fórmulas.
+
+## Segurança e verificação
+
+A autenticação atual usa e-mail e senha, bcrypt e access token JWT com refresh token revogável e rotação. Autorização diferencia técnico e supervisor. O rate limiter de login é local ao processo. Com PostgreSQL, `JWT_SECRET` é obrigatório; contas conhecidas de desenvolvimento não são semeadas em produção.
+
+GitHub Actions usa Node 22 e lockfile, executa typechecks dos três projetos, testes, cobertura de backend e `drizzle-kit check`. O check confere o histórico de migrações; geração e revisão continuam necessárias para acompanhar alterações no schema.
+
+## Funcionalidades planejadas
+
+Checklists por tipo de sistema aguardam RA-006 e assinatura aguarda RA-004. Geração de PDF e upload de fotos em armazenamento de objetos não estão implementados. O banco deverá guardar metadados e referências quando essa integração for definida.
+
+O serviço de notificações possui testes isolados, mas não está ligado às rotas nem a push ou WhatsApp reais. A resolução de alertas ainda precisa de integração com a origem dos alertas do painel. Não apresentar esses recursos como entrega concluída.
+
+Também ficam pendentes política de conflitos entre dispositivos, revisão de visitas sincronizadas, autenticação por telefone e provedor definitivo de armazenamento.
+
+## Decisões registradas
+
+Consulte [docs/adr](../adr/README.md) para decisões sobre monólito modular, categorias de erro, schemas HTTP/OpenAPI, banco local e idempotência.
