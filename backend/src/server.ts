@@ -14,5 +14,7 @@ if (config.seedDevelopmentData) {
 
 const logger = createLogger();
 createApp({ db, jwtSecret: config.jwtSecret, logger }).listen(config.port, config.host, () => {
-  logger.info(`QQS backend listening on http://${config.host}:${config.port} (docs em /docs)`);
+  // 0.0.0.0 é endereço de escuta; o navegador não abre esse endereço.
+  const host = config.host === "0.0.0.0" ? "localhost" : config.host;
+  logger.info(`QQS backend listening on ${config.host}:${config.port} · docs em http://${host}:${config.port}/docs/`);
 });
