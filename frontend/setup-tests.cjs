@@ -28,6 +28,8 @@ if (typeof document === "undefined") {
 const iconMockPath = path.resolve(__dirname, "mock-icons.cjs");
 const secureStoreMockPath = path.resolve(__dirname, "mock-secure-store.cjs");
 const sqliteKvMockPath = path.resolve(__dirname, "mock-sqlite-kv.cjs");
+const safeAreaMockPath = path.resolve(__dirname, "mock-safe-area.cjs");
+const expoRouterMockPath = path.resolve(__dirname, "mock-expo-router.cjs");
 
 Module._resolveFilename = function(req, ...args) {
   if (req === "react-native") return orig.call(this, "react-native-web", ...args);
@@ -39,6 +41,12 @@ Module._resolveFilename = function(req, ...args) {
   }
   if (req === "expo-sqlite/kv-store") {
     return sqliteKvMockPath;
+  }
+  if (req === "react-native-safe-area-context") {
+    return safeAreaMockPath;
+  }
+  if (req === "expo-router" || req.startsWith("expo-router/")) {
+    return expoRouterMockPath;
   }
   return orig.call(this, req, ...args);
 };

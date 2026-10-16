@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { Button } from "../../shared/ui/components/Button";
 import { TextField } from "../../shared/ui/components/TextField";
+import { Screen } from "../../shared/ui/layout";
 import { useAuth } from "./AuthContext";
 import { styles } from "./LoginScreen.styles";
 
@@ -54,11 +55,8 @@ export function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-    >
-      <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+    <View style={styles.container}>
+      <Screen scroll keyboard contentContainerStyle={styles.screen}>
         <View style={styles.logoWrap}>
           <Text style={styles.brand}>QQS App</Text>
           <Text style={styles.tagline}>Visitas técnicas</Text>
@@ -97,15 +95,11 @@ export function LoginScreen() {
             onPress={handleSubmit}
             style={styles.submitButton}
           />
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push("/register" as never)}
-            style={{ marginTop: 16, alignItems: "center" }}
-          >
-            <Text style={styles.tagline}>Não tenho conta, criar agora</Text>
+          <Pressable onPress={() => router.push("/register")} style={styles.switchLink}>
+            <Text style={styles.tagline}>Não tem conta? Cadastre-se</Text>
           </Pressable>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </Screen>
+    </View>
   );
 }

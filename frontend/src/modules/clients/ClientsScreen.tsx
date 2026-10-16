@@ -3,10 +3,10 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import type { ClientSummary, CreateClientRequest } from "@qqs/contracts";
 
 import { Badge } from "../../shared/ui/components/Badge";
-import { theme } from "../../shared/ui/theme";
 import type { ClientApi } from "./client-api";
 import { ApiError } from "../../shared/http/api-error";
 import { ClientForm } from "./ClientForm";
+import { styles } from "./ClientsScreen.styles";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError && error.status === 409) return "CNPJ já cadastrado em outra empresa.";
@@ -54,51 +54,42 @@ export function ClientsScreen({ api }: { api: ClientApi }) {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ gap: theme.spacing.md, padding: theme.spacing.md }}>
-      <Text style={{ color: theme.colors.darkGray, fontSize: 22, fontWeight: "700" }}>Empresas</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Empresas</Text>
 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={creating ? "Fechar cadastro" : "Nova empresa"}
         onPress={() => setCreating((open) => !open)}
-        style={{ backgroundColor: theme.colors.corporateBlue, borderRadius: theme.radius.md, padding: 12 }}
+        style={styles.newClientButton}
       >
-        <Text style={{ color: theme.colors.white, fontWeight: "700", textAlign: "center" }}>
+        <Text style={styles.newClientButtonText}>
           {creating ? "Fechar cadastro" : "+ Nova empresa"}
         </Text>
       </Pressable>
 
       {creating && <ClientForm submitting={saving} error={formError} onSubmit={create} />}
 
-      {loadError && <Text style={{ color: theme.colors.darkGray }}>Não foi possível carregar as empresas.</Text>}
+      {loadError && <Text style={styles.errorText}>Não foi possível carregar as empresas.</Text>}
 
       {clients.map((client) => (
-        <View
-          key={client.id}
-          style={{
-            backgroundColor: theme.colors.white,
-            borderColor: theme.colors.lightBlue,
-            borderRadius: theme.radius.md,
-            borderWidth: 1,
-            gap: 4,
-            padding: theme.spacing.md,
-          }}
-        >
-          <View style={{ alignItems: "center", flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={{ color: theme.colors.darkGray, flex: 1, fontWeight: "700" }}>{client.name}</Text>
+        <View key={client.id} style={styles.clientCard}>
+          <View style={styles.clientHeader}>
+            <Text style={styles.clientName}>{client.name}</Text>
             <Badge label={client.active ? "Ativa" : "Inativa"} variant={client.active ? "success" : "neutral"} />
           </View>
-          <Text style={{ color: theme.colors.darkGray }}>{client.address}</Text>
-          <Text style={{ color: theme.colors.darkGray }}>
+          <Text style={styles.clientAddress}>{client.address}</Text>
+          <Text style={styles.clientMeta}>
             {`Raio de ${client.radiusMeters} m · ${client.systems.length} sistemas`}
           </Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${client.active ? "Inativar" : "Reativar"} ${client.name}`}
             onPress={() => toggleActive(client)}
+            style={styles.toggleButton}
           >
-            <Text style={{ color: theme.colors.corporateBlue, fontWeight: "700" }}>
-              {client.active ? "Inativar" : "Reativar"}
+            <Text style={styles.toggleText}>
+              {client.active ? "Inativar empresa" : "Reativar empresa"}
             </Text>
           </Pressable>
         </View>

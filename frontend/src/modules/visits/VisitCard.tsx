@@ -23,13 +23,13 @@ export function VisitCard({
     >
       <View style={styles.headerRow}>
         <View style={styles.clientTitleGroup}>
-          <Text style={styles.client}>{visit.clientName}</Text>
+          <Text style={styles.client} numberOfLines={1}>{visit.clientName}</Text>
           <View style={[styles.badge, inProgress ? styles.badgeInProgress : styles.badgeAssigned]}>
             <View style={[styles.badgeDot, inProgress && styles.badgeDotInProgress]} />
             <Text style={styles.badgeText}>{statusLabel(visit.status)}</Text>
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={20} color="#8A8F98" />
+        <Ionicons name="chevron-forward" size={20} color={theme.colors.textSubtle} />
       </View>
 
       <View style={styles.infoGroup}>
@@ -44,7 +44,12 @@ export function VisitCard({
       </View>
 
       {visit.arrival?.outsideRadius && (
-        <Badge label="Fora do raio" variant="warning" iconName="alert-circle-outline" style={{ alignSelf: "flex-start", marginTop: 8 }} />
+        <Badge
+          label="Fora do raio"
+          variant="warning"
+          iconName="alert-circle-outline"
+          style={styles.outsideRadiusBadge}
+        />
       )}
 
       {visit.syncStatus !== "synced" && (

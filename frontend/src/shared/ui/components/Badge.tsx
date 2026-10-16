@@ -27,7 +27,7 @@ export function Badge({
           name={iconName}
           size={12}
           color={iconColors[variant]}
-          style={{ marginRight: 4 }}
+          style={{ marginRight: theme.spacing.xs }}
         />
       )}
       <Text style={[styles.text, styles[`${variant}Text`]]}>{label}</Text>
@@ -37,8 +37,8 @@ export function Badge({
 
 const iconColors: Record<BadgeVariant, string> = {
   info: theme.colors.corporateBlue,
-  success: "#27AE60",
-  warning: "#D68910",
-  danger: "#C0392B",
-  neutral: theme.colors.darkGray,
+  success: theme.colors.success,
+  warning: theme.colors.warning,
+  danger: theme.colors.danger,
+  neutral: theme.colors.textMuted,
 };

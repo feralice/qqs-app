@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { Button } from "../../shared/ui/components/Button";
 import { TextField } from "../../shared/ui/components/TextField";
+import { Screen } from "../../shared/ui/layout";
 import { useAuth } from "./AuthContext";
-import { styles } from "./LoginScreen.styles";
+import { styles } from "./RegisterScreen.styles";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -61,8 +62,8 @@ export function RegisterScreen() {
   }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+    <View style={styles.container}>
+      <Screen scroll keyboard contentContainerStyle={styles.screen}>
         <View style={styles.logoWrap}>
           <Text style={styles.brand}>QQS App</Text>
           <Text style={styles.tagline}>Criar conta de técnico</Text>
@@ -111,11 +112,11 @@ export function RegisterScreen() {
             onPress={handleSubmit}
             style={styles.submitButton}
           />
-          <Pressable onPress={() => router.back()} style={{ marginTop: 16, alignItems: "center" }}>
+          <Pressable onPress={() => router.back()} style={styles.switchLink}>
             <Text style={styles.tagline}>Já tenho conta, entrar</Text>
           </Pressable>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </Screen>
+    </View>
   );
 }

@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useAuth } from "../../modules/auth/AuthContext";
 import { theme } from "./theme";
+import { Screen } from "./layout";
 import { styles } from "./AppShell.styles";
 
 export function AppShell({ children }: { children?: ReactNode }) {
@@ -13,7 +14,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + theme.spacing.md }]}>
+      <View style={[styles.header, { paddingTop: insets.top + theme.spacing.lg }]}>
         <View style={styles.headerRow}>
           <View style={styles.brandGroup}>
             <View style={styles.logoCircle}>
@@ -39,7 +40,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
           )}
         </View>
       </View>
-      <View style={[styles.content, { paddingBottom: insets.bottom + theme.spacing.lg }]}>
+      <Screen style={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}>
         {children ?? (
           <View style={styles.welcomeBox}>
             <Text style={styles.title}>Bem-vindo ao QQS App</Text>
@@ -48,7 +49,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
             </Text>
           </View>
         )}
-      </View>
+      </Screen>
     </View>
   );
 }

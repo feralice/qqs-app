@@ -46,9 +46,7 @@ test("AdminHomeScreen renders supervisor dashboard, calendar strip, metrics and 
   assert.match(output, /\+ Agendar Nova Visita/);
   assert.match(output, /Agenda Semanal/);
   assert.match(output, /Gases da Amazônia/);
-  assert.match(output, /Métricas da Operação/);
-  assert.match(output, /Visitas Hoje/);
-  assert.match(output, /Técnicos Ativos/);
+  assert.match(output, /Equipe em campo/);
   assert.match(output, /Módulos do Sistema/);
 });
 

@@ -29,13 +29,13 @@ export function StatCard({
         </View>
         {trend && (
           <View style={styles.trendBadge}>
-            <Ionicons name="trending-up" size={12} color="#27AE60" />
+            <Ionicons name="trending-up" size={12} color={theme.colors.success} />
             <Text style={styles.trendText}>{trend}</Text>
           </View>
         )}
       </View>
 
-      <Text style={styles.value}>{value}</Text>
+      <Text style={styles.value} maxFontSizeMultiplier={1.3}>{value}</Text>
       <Text style={styles.title}>{title}</Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
     </View>

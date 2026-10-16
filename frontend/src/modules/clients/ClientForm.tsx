@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { isValidCnpj, type CreateClientRequest } from "@qqs/contracts";
 
-import { theme } from "../../shared/ui/theme";
+import { styles } from "./ClientForm.styles";
 
 // Aceita vírgula decimal, como o técnico digita no teclado em português.
 export function parseDecimal(value: string): number | undefined {
@@ -12,14 +12,6 @@ export function parseDecimal(value: string): number | undefined {
 }
 
 type Field = "name" | "cnpj" | "address" | "latitude" | "longitude" | "radius";
-
-const inputStyle = {
-  borderColor: theme.colors.lightBlue,
-  borderRadius: theme.radius.md,
-  borderWidth: 1,
-  color: theme.colors.darkGray,
-  padding: 12,
-} as const;
 
 function validate(values: Record<Field, string>): Partial<Record<Field, string>> {
   const errors: Partial<Record<Field, string>> = {};
@@ -85,21 +77,21 @@ export function ClientForm({
   }
 
   const field = (key: Field, label: string, placeholder: string, keyboardType?: "numeric") => (
-    <View style={{ gap: 4 }}>
+    <View style={styles.fieldGroup}>
       <TextInput
         accessibilityLabel={label}
         placeholder={placeholder}
         keyboardType={keyboardType}
         value={values[key]}
         onChangeText={set(key)}
-        style={inputStyle}
+        style={styles.input}
       />
-      {errors[key] && <Text style={{ color: theme.colors.corporateBlue }}>{errors[key]}</Text>}
+      {errors[key] && <Text style={styles.fieldError}>{errors[key]}</Text>}
     </View>
   );
 
   return (
-    <View style={{ gap: theme.spacing.sm }}>
+    <View style={styles.container}>
       {field("name", "Razão social", "Razão social")}
       {field("cnpj", "CNPJ", "00.000.000/0000-00", "numeric")}
       {field("address", "Endereço", "Endereço completo")}
@@ -107,18 +99,19 @@ export function ClientForm({
       {field("longitude", "Longitude", "-60,0250", "numeric")}
       {field("radius", "Raio permitido em metros", "200", "numeric")}
 
-      <Text style={{ color: theme.colors.darkGray, fontWeight: "700" }}>Sistemas ({systems.length})</Text>
+      <Text style={styles.sectionTitle}>Sistemas ({systems.length})</Text>
       {systems.map((system) => (
-        <View key={system.name} style={{ alignItems: "center", flexDirection: "row", justifyContent: "space-between" }}>
-          <Text style={{ color: theme.colors.darkGray }}>
+        <View key={system.name} style={styles.systemRow}>
+          <Text style={styles.systemText}>
             {system.name} ({system.type})
           </Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Remover ${system.name}`}
             onPress={() => setSystems((current) => current.filter((item) => item.name !== system.name))}
+            style={styles.removeButton}
           >
-            <Text style={{ color: theme.colors.corporateBlue }}>Remover</Text>
+            <Text style={styles.removeButtonText}>Remover</Text>
           </Pressable>
         </View>
       ))}
@@ -127,28 +120,33 @@ export function ClientForm({
         placeholder="Ex.: Torre 1"
         value={systemName}
         onChangeText={setSystemName}
-        style={inputStyle}
+        style={styles.input}
       />
       <TextInput
         accessibilityLabel="Tipo do sistema"
         placeholder="Ex.: torre, caldeira"
         value={systemType}
         onChangeText={setSystemType}
-        style={inputStyle}
+        style={styles.input}
       />
-      <Pressable accessibilityRole="button" accessibilityLabel="Adicionar sistema" onPress={addSystem}>
-        <Text style={{ color: theme.colors.corporateBlue, fontWeight: "700" }}>+ Adicionar sistema</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Adicionar sistema"
+        onPress={addSystem}
+        style={styles.addSystemButton}
+      >
+        <Text style={styles.addSystemButtonText}>+ Adicionar sistema</Text>
       </Pressable>
 
-      {error && <Text style={{ color: theme.colors.corporateBlue, fontWeight: "700" }}>{error}</Text>}
+      {error && <Text style={styles.generalError}>{error}</Text>}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Salvar empresa"
         disabled={submitting}
         onPress={submit}
-        style={{ backgroundColor: theme.colors.corporateBlue, borderRadius: theme.radius.md, padding: 14 }}
+        style={styles.submitButton}
       >
-        <Text style={{ color: theme.colors.white, fontWeight: "700", textAlign: "center" }}>
+        <Text style={styles.submitButtonText}>
           {submitting ? "Salvando..." : "Salvar empresa"}
         </Text>
       </Pressable>

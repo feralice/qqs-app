@@ -9,7 +9,6 @@ import type {
 } from "@qqs/contracts";
 
 import { useOptionalAuth } from "../auth/AuthContext";
-import { StatCard } from "../../shared/ui/components/StatCard";
 import { Badge } from "../../shared/ui/components/Badge";
 import { WeekCalendarStrip } from "../../shared/ui/components/WeekCalendarStrip";
 import { AdminScheduleModal, type AdminScheduleDraft } from "./AdminScheduleModal";
@@ -246,42 +245,6 @@ export function AdminHomeScreen({
           </Pressable>
         ))
       )}
-
-      {/* KPI Stats Grid */}
-      <Text style={styles.sectionTitle}>Métricas da Operação</Text>
-      <View style={styles.statsRow}>
-        <StatCard
-          title="Visitas Hoje"
-          value={String(allVisits.length)}
-          subtitle="Total no período"
-          iconName="calendar"
-          accentColor={theme.colors.corporateBlue}
-          trend="+15%"
-        />
-        <StatCard
-          title="Técnicos Ativos"
-          value={String(employees.length)}
-          subtitle="Equipe cadastrada"
-          iconName="people"
-          accentColor="#27AE60"
-        />
-      </View>
-      <View style={styles.statsRow}>
-        <StatCard
-          title="Tempo Médio"
-          value="45 min"
-          subtitle="Por atendimento"
-          iconName="stopwatch"
-          accentColor="#F39C12"
-        />
-        <StatCard
-          title="Precisão GPS"
-          value="100%"
-          subtitle="Sem divergência"
-          iconName="navigate"
-          accentColor={theme.colors.corporateBlue}
-        />
-      </View>
 
       {/* Admin Modules */}
       <Text style={styles.sectionTitle}>Módulos do Sistema</Text>

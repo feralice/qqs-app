@@ -1,6 +1,6 @@
 # Layout responsivo e padronização visual do app
 
-**Status:** Aguardando revisão da solicitante  
+**Status:** Aprovado pela solicitante  
 **Data:** 15/10/2026
 
 ## Objetivo

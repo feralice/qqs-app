@@ -2,22 +2,28 @@ import { StyleSheet } from "react-native";
 
 import { theme } from "../theme";
 
-export const PLACEHOLDER_COLOR = "#8A8F98";
-const ERROR_COLOR = "#C0392B";
+export const PLACEHOLDER_COLOR = theme.colors.textSubtle;
+const ERROR_COLOR = theme.colors.danger;
 
 export const styles = StyleSheet.create({
-  wrapper: { marginBottom: theme.spacing.md },
-  label: { color: theme.colors.darkGray, fontSize: 14, fontWeight: "700", marginBottom: 6 },
+  wrapper: { marginBottom: theme.spacing.lg },
+  label: {
+    color: theme.colors.text,
+    fontSize: theme.typography.sizes.md,
+    fontWeight: theme.typography.weights.bold,
+    marginBottom: theme.spacing.xs,
+  },
   inputRow: { position: "relative" },
   input: {
-    backgroundColor: theme.colors.white,
-    borderColor: theme.colors.lightBlue,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.border,
     borderRadius: theme.radius.md,
     borderWidth: 1.5,
-    color: theme.colors.nearBlack,
-    fontSize: 16,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm + 4,
+    color: theme.colors.text,
+    fontSize: theme.typography.sizes.lg,
+    minHeight: 44,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
   },
   inputWithToggle: { paddingRight: 44 },
   inputFocused: { borderColor: theme.colors.corporateBlue },
@@ -31,5 +37,9 @@ export const styles = StyleSheet.create({
     top: 0,
     width: 40,
   },
-  error: { color: ERROR_COLOR, fontSize: 13, marginTop: 4 },
+  error: {
+    color: ERROR_COLOR,
+    fontSize: theme.typography.sizes.sm,
+    marginTop: theme.spacing.xs,
+  },
 });

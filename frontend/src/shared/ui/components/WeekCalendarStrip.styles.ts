@@ -3,16 +3,12 @@ import { theme } from "../theme";
 
 export const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    borderColor: theme.colors.border,
     elevation: 2,
   },
   header: {
@@ -22,30 +18,30 @@ export const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   monthTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: theme.colors.nearBlack,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text,
   },
   navRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: theme.spacing.sm,
   },
   navButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: "#F1F5F9",
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.surfaceAlt,
   },
   todayButton: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.sm,
     backgroundColor: theme.colors.lightBlue,
   },
   todayText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.semibold,
     color: theme.colors.corporateBlue,
   },
   daysRow: {
@@ -56,9 +52,9 @@ export const styles = StyleSheet.create({
   dayCol: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: theme.spacing.sm,
     paddingHorizontal: 2,
-    borderRadius: 10,
+    borderRadius: theme.radius.sm,
     marginHorizontal: 2,
   },
   dayColSelected: {
@@ -69,19 +65,19 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.corporateBlue,
   },
   dayOfWeek: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#64748B",
+    fontSize: theme.typography.sizes.xs,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textMuted,
     textTransform: "uppercase",
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
   },
   dayOfWeekSelected: {
     color: theme.colors.white,
   },
   dayNumber: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: theme.colors.nearBlack,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text,
   },
   dayNumberSelected: {
     color: theme.colors.white,
@@ -91,7 +87,7 @@ export const styles = StyleSheet.create({
     top: 2,
     right: 2,
     backgroundColor: theme.colors.aqua,
-    borderRadius: 8,
+    borderRadius: theme.radius.sm,
     minWidth: 16,
     height: 16,
     alignItems: "center",
@@ -102,8 +98,8 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
   },
   countText: {
-    fontSize: 10,
-    fontWeight: "700",
+    fontSize: theme.typography.sizes.xs,
+    fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
   countTextSelected: {
