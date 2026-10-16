@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
+import { openDatabase } from "./database.js";
 import { createTestDatabase } from "./test-database.js";
 import { seedDevelopmentData } from "./seed.js";
 import { clientSystems, clients, users, visits } from "./schema.js";
@@ -30,4 +34,16 @@ test("createTestDatabase truncates data between calls", async () => {
   await seedDevelopmentData(first);
   const second = await createTestDatabase();
   assert.equal((await second.select().from(users)).length, 0);
+});
+
+test("openDatabase creates missing parent folders of the PGlite data dir", async () => {
+  const root = mkdtempSync(join(tmpdir(), "qqs-db-"));
+  const dataDir = join(root, ".data", "pglite");
+  try {
+    const opened = await openDatabase({ dataDir });
+    await opened.close();
+    assert.ok(existsSync(dataDir));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

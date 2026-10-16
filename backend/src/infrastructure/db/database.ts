@@ -1,3 +1,4 @@
+import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 
@@ -28,6 +29,8 @@ export async function openDatabase(config: { url?: string; dataDir?: string }): 
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
   const { migrate } = await import("drizzle-orm/pglite/migrator");
+  // PGlite cria apenas o último nível do caminho; num clone novo `.data` ainda não existe.
+  if (config.dataDir) mkdirSync(config.dataDir, { recursive: true });
   const client = new PGlite(config.dataDir);
   const db = drizzle(client, { schema });
   await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
