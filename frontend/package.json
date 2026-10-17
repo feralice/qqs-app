@@ -24,13 +24,13 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.86.3",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-web": "^0.21.2",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-web": "^0.21.4",
     "react-native-webview": "^14.0.1"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2",
-    "@types/react": "~19.2.4",
+    "@types/node": "^26.6.5",
+    "@types/react": "~19.3.0",
     "react-test-renderer": "^19.1.0",
     "tsx": "^4.20.5",
     "typescript": "~6.0.3"
