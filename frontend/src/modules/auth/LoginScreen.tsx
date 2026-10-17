@@ -95,7 +95,11 @@ export function LoginScreen() {
             onPress={handleSubmit}
             style={styles.submitButton}
           />
-          <Pressable onPress={() => router.push("/register")} style={styles.switchLink}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push("/register")}
+            style={styles.switchLink}
+          >
             <Text style={styles.tagline}>Não tem conta? Cadastre-se</Text>
           </Pressable>
         </View>

@@ -50,7 +50,7 @@ export function Screen({
     content = (
       <KeyboardAvoidingView
         style={styles.outer}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {content}
       </KeyboardAvoidingView>

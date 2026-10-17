@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import React from "react";
-import { Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Text, View } from "react-native";
 import { create, act } from "react-test-renderer";
 
 import { LayoutProvider, useLayout } from "./LayoutProvider";
@@ -87,4 +87,23 @@ test("Grid distributes children in 2 columns for regular and 1 column for compac
   const compJson = JSON.stringify(compactTree!.toJSON());
   assert.match(compJson, /c-item-1/);
   assert.match(compJson, /c-item-2/);
+});
+
+test("Screen with keyboard uses height behavior on Android so inputs stay above the keyboard", () => {
+  const originalOS = Platform.OS;
+  Platform.OS = "android";
+  try {
+    let tree: ReturnType<typeof create>;
+    act(() => {
+      tree = create(
+        <Screen keyboard>
+          <Text>Form</Text>
+        </Screen>
+      );
+    });
+    const keyboardView = tree!.root.findByType(KeyboardAvoidingView);
+    assert.equal(keyboardView.props.behavior, "height");
+  } finally {
+    Platform.OS = originalOS;
+  }
 });

@@ -17,6 +17,7 @@ function findStylesFiles(dir: string): string[] {
   return results;
 }
 
+// Espaçamentos (padding, margin, gap) ainda não são cobertos: há ~110 valores fora da escala de theme.spacing.
 test("no styles file contains hardcoded hex colors, font sizes or border radii", () => {
   const srcDir = path.resolve(__dirname, "../..");
   const stylesFiles = findStylesFiles(srcDir);

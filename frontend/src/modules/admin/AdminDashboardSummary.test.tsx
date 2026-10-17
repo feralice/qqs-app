@@ -82,3 +82,13 @@ test("AdminDashboardSummary distinguishes loading from an empty loaded summary",
   });
   assert.match(JSON.stringify(tree!.toJSON()), /Nenhuma visita para este dia/);
 });
+
+test("AdminDashboardSummary uses singular for a single field technician", () => {
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(<AdminDashboardSummary summary={{ ...summary, employees: [sampleEmployees[0]] }} />);
+  });
+  const output = JSON.stringify(tree!.toJSON());
+  assert.match(output, /1 técnico\b/);
+  assert.doesNotMatch(output, /1 técnicos/);
+});

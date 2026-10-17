@@ -17,10 +17,13 @@ export const semanticColors = {
   surfaceTint: "#F0F7FD",
   border: "#E2E8F0",
   borderStrong: "#CBD5E1",
+  infoText: "#0770C0",
   success: "#27AE60",
   successBg: "#EAFAF1",
+  successText: "#1E7E46",
   warning: "#F39C12",
   warningBg: "#FEF5E7",
+  warningText: "#9A5B00",
   danger: "#C0392B",
   dangerBg: "#FDEDEC",
 } as const;

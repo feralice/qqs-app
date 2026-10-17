@@ -151,7 +151,7 @@ export function AdminDashboardSummary({
       {employees.length > 0 && (
         <View>
           <Text style={styles.sectionTitle}>
-            Equipe em campo · {employees.length} técnicos
+            {`Equipe em campo · ${employees.length} técnico${employees.length > 1 ? "s" : ""}`}
           </Text>
           <View style={styles.staffList}>
             {visibleEmployees.map((emp, index) => (

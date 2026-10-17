@@ -32,9 +32,9 @@ export const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.sm,
     fontWeight: theme.typography.weights.bold,
   },
-  infoText: { color: theme.colors.corporateBlue },
-  successText: { color: theme.colors.success },
-  warningText: { color: theme.colors.warning },
+  infoText: { color: theme.colors.infoText },
+  successText: { color: theme.colors.successText },
+  warningText: { color: theme.colors.warningText },
   dangerText: { color: theme.colors.danger },
   neutralText: { color: theme.colors.textMuted },
 });

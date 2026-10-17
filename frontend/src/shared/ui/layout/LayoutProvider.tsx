@@ -21,11 +21,6 @@ export function LayoutProvider({
 
 export function useLayout(): LayoutInfo {
   const context = useContext(LayoutContext);
-  if (context) {
-    return context;
-  }
-
   const windowDims = useWindowDimensions();
-  const fallbackWidth = windowDims?.width ?? 360;
-  return layoutFor(fallbackWidth);
+  return context ?? layoutFor(windowDims?.width ?? 360);
 }

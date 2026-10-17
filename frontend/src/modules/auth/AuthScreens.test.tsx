@@ -6,6 +6,7 @@ import { create, act } from "react-test-renderer";
 
 import { AppShell } from "../../shared/ui/AppShell";
 import { LoginScreen } from "./LoginScreen";
+import { styles as loginStyles } from "./LoginScreen.styles";
 import { RegisterScreen } from "./RegisterScreen";
 import { AuthProvider } from "./AuthContext";
 
@@ -54,4 +55,17 @@ test("RegisterScreen renders form fields with extracted styles and Screen contai
   assert.match(output, /Nome/);
   assert.match(output, /E-mail/);
   assert.match(output, /Senha/);
+});
+
+test("LoginScreen exposes the sign-up link as a button to screen readers", () => {
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(
+      <AuthProvider>
+        <LoginScreen />
+      </AuthProvider>
+    );
+  });
+  const [signUpLink] = tree!.root.findAll((node) => node.props.style === loginStyles.switchLink);
+  assert.equal(signUpLink.props.accessibilityRole, "button");
 });
