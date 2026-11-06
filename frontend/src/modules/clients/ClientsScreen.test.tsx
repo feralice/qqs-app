@@ -80,3 +80,17 @@ test("ClientsScreen shows an error when the list cannot be loaded", async () => 
   const tree = await render(api);
   assert.match(JSON.stringify(tree.toJSON()), /Não foi possível carregar as empresas/);
 });
+
+test("ClientsScreen opens the treatment program of a company", async () => {
+  const opened: string[] = [];
+  let tree: ReturnType<typeof create>;
+  await act(async () => {
+    tree = create(
+      React.createElement(ClientsScreen, { api: fakeApi().api, onOpenProgram: (client) => opened.push(client.id) }),
+    );
+  });
+  await act(async () =>
+    tree!.root.findByProps({ accessibilityLabel: "Programa de tratamento de Ambev Manaus" }).props.onPress(),
+  );
+  assert.deepEqual(opened, ["client-002"]);
+});

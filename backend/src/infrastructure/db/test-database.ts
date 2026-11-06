@@ -9,7 +9,7 @@ export async function createTestDatabase(): Promise<Database> {
   shared ??= openDatabase({}).then((opened) => opened.db);
   const db = await shared;
   await db.execute(
-    sql`TRUNCATE processed_operations, visits, client_systems, clients, refresh_tokens, users RESTART IDENTITY CASCADE`,
+    sql`TRUNCATE processed_operations, system_products, system_parameters, products, visits, client_systems, clients, refresh_tokens, users RESTART IDENTITY CASCADE`,
   );
   return db;
 }

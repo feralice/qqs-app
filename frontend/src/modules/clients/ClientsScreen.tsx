@@ -14,7 +14,7 @@ function errorMessage(error: unknown): string {
   return "Não foi possível salvar. Verifique a conexão.";
 }
 
-export function ClientsScreen({ api }: { api: ClientApi }) {
+export function ClientsScreen({ api, onOpenProgram }: { api: ClientApi; onOpenProgram?: (client: ClientSummary) => void }) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -82,6 +82,16 @@ export function ClientsScreen({ api }: { api: ClientApi }) {
           <Text style={styles.clientMeta}>
             {`Raio de ${client.radiusMeters} m · ${client.systems.length} sistemas`}
           </Text>
+          {onOpenProgram && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Programa de tratamento de ${client.name}`}
+              onPress={() => onOpenProgram(client)}
+              style={styles.toggleButton}
+            >
+              <Text style={styles.toggleText}>Programa de tratamento</Text>
+            </Pressable>
+          )}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${client.active ? "Inativar" : "Reativar"} ${client.name}`}

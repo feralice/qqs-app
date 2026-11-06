@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import type { Database } from "./database.js";
-import { clientSystems, clients, users, visits } from "./schema.js";
+import { clientSystems, clients, products, systemParameters, systemProducts, users, visits } from "./schema.js";
 
 let passwordHashes: Promise<{ admin: string; technician: string }> | undefined;
 
@@ -46,6 +46,42 @@ export async function seedDevelopmentData(db: Database): Promise<void> {
       { id: "system-001", clientId: "client-001", name: "Torre 1", type: "tower" },
       { id: "system-002", clientId: "client-001", name: "Torre 2", type: "tower" },
       { id: "system-003", clientId: "client-001", name: "Caldeira 1", type: "boiler" },
+    ])
+    .onConflictDoNothing();
+
+  // Linha QQS citada na ENT-001; o programa da Torre 1 é só exemplo para desenvolvimento.
+  const qqsProducts = [
+    ["INP", "Inibidor de corrosão", "L"],
+    ["DIS", "Dispersante", "L"],
+    ["BIO", "Biocida", "L"],
+    ["OXP", "Dióxido de cloro para água potável", "L"],
+    ["IHP", "Inibidor à base de fosfato", "L"],
+    ["ALC", "Alcalinizante de caldeira", "L"],
+    ["NSS", "Circuito fechado, controle por nitrito", "kg"],
+    ["NSL", "Circuito fechado, controle por nitrito", "L"],
+  ] as const;
+  await db
+    .insert(products)
+    .values(
+      qqsProducts.map(([code, description, unit]) => ({
+        id: `product-${code.toLowerCase()}`,
+        name: `QQS ${code}`,
+        nameKey: `qqs ${code.toLowerCase()}`,
+        description,
+        unit,
+      })),
+    )
+    .onConflictDoNothing();
+
+  await db
+    .insert(systemParameters)
+    .values({ systemId: "system-001", position: 0, name: "pH", min: 6.8, max: 8.2 })
+    .onConflictDoNothing();
+  await db
+    .insert(systemProducts)
+    .values([
+      { systemId: "system-001", position: 0, productId: "product-inp", dailyDose: 2, maintenanceDose: 1 },
+      { systemId: "system-001", position: 1, productId: "product-bio", dailyDose: 0.5 },
     ])
     .onConflictDoNothing();
 

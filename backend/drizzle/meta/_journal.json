@@ -15,6 +15,13 @@
       "when": 1791257250013,
       "tag": "0001_processed_operations",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792547073691,
+      "tag": "0002_programa_tratamento",
+      "breakpoints": true
     }
   ]
 }

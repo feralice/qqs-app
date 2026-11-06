@@ -256,3 +256,62 @@ export type AdminDashboardSummary = {
   lastUpdatedAt: string;
   isLoaded: boolean;
 };
+
+export type ProductId = string;
+
+export type ProductUnit = "L" | "kg";
+
+export type Product = {
+  id: ProductId;
+  name: string;
+  description?: string;
+  unit: ProductUnit;
+  active: boolean;
+};
+
+export type CreateProductRequest = {
+  name: string;
+  description?: string;
+  unit?: ProductUnit;
+};
+
+export type UpdateProductRequest = Partial<CreateProductRequest> & {
+  active?: boolean;
+};
+
+export type ControlParameter = {
+  name: string;
+  unit?: string;
+  min?: number;
+  max?: number;
+};
+
+export type ProgramProductInput = {
+  productId: ProductId;
+  dailyDose: number;
+  maintenanceDose?: number;
+};
+
+export type ProgramProduct = ProgramProductInput & {
+  productName: string;
+  unit: ProductUnit;
+  productActive: boolean;
+};
+
+export type SystemProgram = {
+  systemId: string;
+  systemName: string;
+  systemType: string;
+  parameters: ControlParameter[];
+  products: ProgramProduct[];
+};
+
+export type ClientProgram = {
+  clientId: ClientId;
+  systems: SystemProgram[];
+};
+
+export type UpdateSystemProgramRequest = {
+  parameters: ControlParameter[];
+  products: ProgramProductInput[];
+};

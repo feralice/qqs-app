@@ -135,6 +135,26 @@ test("AdminHomeScreen opens the companies screen", () => {
   assert.equal(opened, 1);
 });
 
+test("AdminHomeScreen opens the product catalog", () => {
+  let opened = 0;
+  let tree: ReturnType<typeof create>;
+  act(() => {
+    tree = create(
+      React.createElement(AdminHomeScreen, {
+        initialDate: "2026-09-22",
+        visits: testVisits,
+        employees: testEmployees,
+        onOpenProducts: () => {
+          opened++;
+        },
+      }),
+    );
+  });
+
+  act(() => tree!.root.findByProps({ accessibilityLabel: "Gerenciar produtos" }).props.onPress());
+  assert.equal(opened, 1);
+});
+
 test("AdminHomeScreen shows visits loaded after the first render", () => {
   let tree: ReturnType<typeof create>;
   act(() => {

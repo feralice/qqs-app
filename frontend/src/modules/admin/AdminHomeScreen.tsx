@@ -55,6 +55,7 @@ export type AdminHomeScreenProps = {
   onScheduleVisit?: (data: AdminScheduleDraft) => Promise<void> | void;
   onOpenVisit?: (visitId: string) => void;
   onOpenClients?: () => void;
+  onOpenProducts?: () => void;
   initialDate?: string;
   dashboardSummary?: DashboardSummary;
 };
@@ -67,6 +68,7 @@ export function AdminHomeScreen({
   onScheduleVisit,
   onOpenVisit,
   onOpenClients,
+  onOpenProducts,
   initialDate,
   dashboardSummary,
 }: AdminHomeScreenProps) {
@@ -175,6 +177,16 @@ export function AdminHomeScreen({
       >
         <Ionicons name="business" size={20} color={theme.colors.white} />
         <Text style={styles.scheduleButtonText}>Empresas</Text>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Gerenciar produtos"
+        onPress={onOpenProducts}
+        style={[styles.scheduleButton, { backgroundColor: theme.colors.aqua }]}
+      >
+        <Ionicons name="flask" size={20} color={theme.colors.white} />
+        <Text style={styles.scheduleButtonText}>Produtos</Text>
       </Pressable>
 
       <AdminDashboardSummary

@@ -4,11 +4,12 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
 } from "drizzle-orm/pg-core";
-import type { ArrivalLocation, EmployeeSummary, UserRole, VisitPhoto } from "@qqs/contracts";
+import type { ArrivalLocation, EmployeeSummary, ProductUnit, UserRole, VisitPhoto } from "@qqs/contracts";
 
 const timestampColumn = (name: string) => timestamp(name, { withTimezone: true });
 const createdAt = () => timestampColumn("created_at").notNull().defaultNow();
@@ -52,6 +53,43 @@ export const clientSystems = pgTable(
     createdAt: createdAt(),
   },
   (table) => [unique().on(table.clientId, table.name)],
+);
+
+export const products = pgTable("products", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  // Unicidade sem diferenciar maiúsculas: "QQS INP" e "qqs inp" são o mesmo produto.
+  nameKey: text("name_key").notNull().unique(),
+  description: text("description"),
+  unit: text("unit").$type<ProductUnit>().notNull().default("L"),
+  active: boolean("active").notNull().default(true),
+  createdAt: createdAt(),
+  updatedAt: timestampColumn("updated_at").notNull().defaultNow(),
+});
+
+export const systemParameters = pgTable(
+  "system_parameters",
+  {
+    systemId: text("system_id").notNull().references(() => clientSystems.id),
+    position: integer("position").notNull(),
+    name: text("name").notNull(),
+    unit: text("unit"),
+    min: doublePrecision("min"),
+    max: doublePrecision("max"),
+  },
+  (table) => [primaryKey({ columns: [table.systemId, table.position] })],
+);
+
+export const systemProducts = pgTable(
+  "system_products",
+  {
+    systemId: text("system_id").notNull().references(() => clientSystems.id),
+    position: integer("position").notNull(),
+    productId: text("product_id").notNull().references(() => products.id),
+    dailyDose: doublePrecision("daily_dose").notNull(),
+    maintenanceDose: doublePrecision("maintenance_dose"),
+  },
+  (table) => [primaryKey({ columns: [table.systemId, table.position] }), unique().on(table.systemId, table.productId)],
 );
 
 export const visits = pgTable("visits", {

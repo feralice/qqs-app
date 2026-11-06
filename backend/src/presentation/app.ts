@@ -12,6 +12,9 @@ import { registerAuthRoutes } from "./routes/auth/auth-routes.js";
 import { authenticate, authorize } from "./http/authenticate.js";
 import { DrizzleClientRepository } from "../infrastructure/persistence/drizzle-client-repository.js";
 import { registerClientRoutes } from "./routes/clients/client-routes.js";
+import { DrizzleProductRepository } from "../infrastructure/persistence/drizzle-product-repository.js";
+import { DrizzleProgramRepository } from "../infrastructure/persistence/drizzle-program-repository.js";
+import { registerProductRoutes } from "./routes/products/product-routes.js";
 import { DrizzleVisitRepository } from "../infrastructure/persistence/drizzle-visit-repository.js";
 import { registerVisitRoutes } from "./routes/visits/visit-routes.js";
 import type { Database } from "../infrastructure/db/database.js";
@@ -54,6 +57,11 @@ export function createApp({ db, jwtSecret, logger = createLogger() }: AppDepende
     rateLimiter: new LoginRateLimiter(),
   });
   registerClientRoutes(api, clients);
+  registerProductRoutes(api, {
+    clients,
+    products: new DrizzleProductRepository(db),
+    programs: new DrizzleProgramRepository(db),
+  });
   registerVisitRoutes(api, { visits, users, clients, clock: systemClock });
   registerAdminRoutes(api, {
     visits,
@@ -66,7 +74,7 @@ export function createApp({ db, jwtSecret, logger = createLogger() }: AppDepende
   const openApi = buildOpenApiDocument(api.routes, {
     title: "QQS App API",
     version: "0.1.0",
-    description: "API do aplicativo de visitas técnicas: autenticação, empresas, visitas com check-in por raio e administração.",
+    description: "API do aplicativo de visitas técnicas: autenticação, empresas, produtos e programa de tratamento, visitas com check-in por raio e administração.",
   });
 
   const app = express();

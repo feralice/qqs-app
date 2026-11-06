@@ -43,6 +43,7 @@ export default function AdminIndex() {
         employees={employees}
         clients={clients}
         onOpenClients={() => router.push("/admin/clients" as never)}
+        onOpenProducts={() => router.push("/admin/products" as never)}
         onScheduleVisit={async ({ client, employeeId, scheduledFor }) => {
           try {
             await visitApi.createVisit({ id: createLocalId(), clientId: client.id, employeeId, scheduledFor });
